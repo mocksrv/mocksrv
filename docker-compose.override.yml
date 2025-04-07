@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  mocksrv:
+    build:
+      target: development
+    volumes:
+      - ./app:/app/app
+      - ./test:/app/test
+      - ./data:/app/data
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development 

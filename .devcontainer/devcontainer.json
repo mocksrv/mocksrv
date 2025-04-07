@@ -1,0 +1,31 @@
+{
+  "name": "MockSrv Development",
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "../docker-compose.override.yml"
+  ],
+  "service": "mocksrv",
+  "workspaceFolder": "/app",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "visualstudioexptteam.vscodeintellicode",
+        "mikestead.dotenv",
+        "christian-kohler.npm-intellisense",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "javascript.format.enable": true,
+        "editor.tabSize": 2
+      }
+    }
+  },
+  "forwardPorts": [
+    1080
+  ],
+  "shutdownAction": "stopCompose",
+  "postCreateCommand": "npm install"
+}

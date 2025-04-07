@@ -1,0 +1,16 @@
+---
+description: This rule ensures all documentation, code comments, and user-facing text is written in English for consistency and international accessibility. It applies to markdown files, JSDoc comments, inline code comments, and error messages throughout the codebase.
+globs: 
+alwaysApply: false
+---
+## Rules
+
+All documentation must be written in English. This includes:
+
+1. README.md and other Markdown files
+2. JSDoc comments in code
+3. Code comments
+4. Function and variable names
+5. Error messages
+
+For consistency and to ensure the project is accessible to a global audience, all documentation and code comments should be in English. This makes the project more maintainable and easier to collaborate on.

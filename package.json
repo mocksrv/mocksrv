@@ -6,7 +6,13 @@
   "scripts": {
     "start": "node app/server.js",
     "dev": "nodemon app/server.js",
-    "test": "node --import ./test/setup.js --test"
+    "test": "node --import ./test/setup.js --test",
+    "docker:build:prod": "docker build --target production -t mocksrv:prod .",
+    "docker:build:dev": "docker build --target development -t mocksrv:dev .",
+    "docker:run:prod": "docker run -p 1080:1080 -v \"$(pwd)/data:/app/data\" --name mocksrv-prod mocksrv:prod",
+    "docker:run:dev": "docker run -p 1080:1080 -v \"$(pwd)/app:/app/app\" -v \"$(pwd)/test:/app/test\" -v \"$(pwd)/data:/app/data\" --name mocksrv-dev mocksrv:dev",
+    "docker:compose": "docker-compose up -d",
+    "docker:compose:dev": "docker-compose up -d"
   },
   "keywords": [
     "mock",

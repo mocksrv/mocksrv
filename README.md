@@ -175,6 +175,56 @@ The server can be configured through environment variables:
 - `PORT` - Server port (default: 1080)
 - `LOG_LEVEL` - Logging level (default: info)
 
+## Docker
+
+### Multi-stage builds
+
+MockSrv uses multi-stage Docker builds, which allows for easy switching between production and development environments.
+
+### Production Environment
+
+```bash
+# Build production image
+docker build --target production -t mocksrv:prod .
+
+# Run production container
+docker run -p 1080:1080 -v $(pwd)/data:/app/data --name mocksrv-prod mocksrv:prod
+```
+
+### Development Environment
+
+```bash
+# Build development image
+docker build --target development -t mocksrv:dev .
+
+# Run development container with hot-reloading
+docker run -p 1080:1080 -v $(pwd)/app:/app/app -v $(pwd)/test:/app/test -v $(pwd)/data:/app/data --name mocksrv-dev mocksrv:dev
+```
+
+### Using Docker Compose
+
+MockSrv can also be run using Docker Compose:
+
+```bash
+# Run in development mode (default)
+docker-compose up -d
+
+# Run in production mode (ignoring docker-compose.override.yml)
+docker-compose -f docker-compose.yml up -d
+```
+
+Expectations are persisted in the `./data` directory, which is mounted as a volume in the container.
+
+### Using VS Code DevContainer
+
+The project includes a DevContainer configuration for VS Code, which allows you to work directly in a Docker container:
+
+1. Install the "Remote - Containers" extension in VS Code
+2. Open the project in VS Code
+3. Click the "Reopen in Container" button or use the Command Palette (F1) and select "Remote-Containers: Reopen in Container"
+
+This will open the development environment in a Docker container with all necessary tools and extensions.
+
 ## Comparison with MockServer
 
 While MockSrv is inspired by MockServer, it offers a different approach and implementation:

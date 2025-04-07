@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  mocksrv:
+    build: 
+      context: .
+      target: production
+    container_name: mocksrv
+    ports:
+      - "1080:1080"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=1080
+      - NODE_ENV=production
+    restart: unless-stopped 
