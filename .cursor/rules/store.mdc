@@ -1,0 +1,18 @@
+# Store Components Rules
+
+## Description
+Guidelines for implementing expectation store and matching mechanisms.
+
+## Files
+src/store/*.js
+
+## Rules
+- Use immutable data structures where possible
+- Implement efficient lookup mechanisms for expectations
+- Document matching algorithms clearly
+- Include detailed comments for complex matching logic
+- Provide validation for all stored expectations
+- Implement proper cleanup mechanisms to prevent memory leaks
+- Keep store implementations independent of Express middleware
+- Follow consistent patterns for store operations (add, find, remove)
+- Ensure thread safety for concurrent operations 

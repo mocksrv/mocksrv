@@ -1,0 +1,18 @@
+# Type Definitions Rules
+
+## Description
+Rules for defining and using types within the MockServer Node project.
+
+## Files
+src/types/*.js
+
+## Rules
+- Use JSDoc for type annotations
+- Export all type definitions for reuse
+- Be explicit about object properties and their types
+- Prefer simple, flat type structures over deeply nested ones
+- Document all types with description comments
+- Use consistent naming conventions for types
+- Add examples of usage where appropriate
+- Keep type definitions separate from business logic
+- Update type definitions when related functionality changes 

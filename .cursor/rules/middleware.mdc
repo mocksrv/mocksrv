@@ -1,0 +1,17 @@
+# Middleware Development Rules
+
+## Description
+Rules specific to middleware components for handling HTTP requests and responses.
+
+## Files
+src/middleware/*.js
+
+## Rules
+- Keep middleware functions pure whenever possible
+- Chain middleware in a clear, logical order
+- Error handling must be explicit, with appropriate status codes
+- Use consistent parameter order: (req, res, next)
+- Document middleware inputs and outputs clearly
+- Asynchronous operations should use await/async pattern
+- Log important middleware events at appropriate levels
+- Always pass errors to next() rather than handling them within middleware 

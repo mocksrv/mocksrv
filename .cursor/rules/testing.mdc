@@ -1,0 +1,22 @@
+# Testing Rules
+
+## Description
+Guidelines for writing and organizing tests in the MockServer Node project.
+
+## Files
+test/*.test.js
+
+## Rules
+- Test filenames should correspond to the module being tested
+- Tests should be independent and not rely on other tests
+- Use descriptive test names that explain the expected behavior
+- Follow AAA pattern (Arrange-Act-Assert) for test structure
+- Mock external dependencies, particularly network calls
+- Test both success paths and error conditions
+- Test edge cases comprehensively
+- Include integration tests for critical paths
+- Keep test code as clear and simple as possible
+- Don't use production code in test assertions
+
+## Reference Files
+@file ../test/setup.js 

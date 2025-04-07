@@ -1,0 +1,19 @@
+# General Rules for MockServer Node
+
+## Description
+These rules apply to the entire MockServer Node project.
+
+## Files
+**/*.js
+**/*.ts
+
+## Rules
+- Follow functional programming paradigm for the codebase
+- Use JSDoc comments for all public functions and types
+- Use 4 spaces for indentation
+- Use semicolons at the end of statements
+- Keep comments concise and clear
+- Write unit tests for all functionality
+- Maintain code coverage at or above 90%
+- Keep functions short and focused on a single responsibility
+- Avoid unnecessary dependencies 

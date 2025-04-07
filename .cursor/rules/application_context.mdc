@@ -1,0 +1,49 @@
+# MockServer Node - Application Context
+
+## Description
+This document provides a comprehensive overview of the MockServer Node application, its architecture, and key functionality.
+
+## Files
+**/*
+
+## Application Summary
+MockServer Node is a lightweight mock server implementation inspired by the original MockServer project. 
+It allows developers to easily mock HTTP endpoints for testing and development purposes.
+
+### Core Features
+- **Request Expectations**: Define expected requests and corresponding responses
+- **Request Matching**: Match incoming requests against expectations using various criteria
+- **HTTP Response**: Return mock responses with customizable status, headers, and body
+- **HTTP Forward**: Forward requests to another server with optional modifications
+- **Delay Simulation**: Add configurable delays to responses for testing timeout scenarios
+- **Verification**: Verify which expectations were matched and how many times
+
+### System Components
+1. **Express Middleware**: Handles HTTP requests and routes them through the matching system
+2. **Expectation Store**: Maintains the collection of defined expectations
+3. **Matcher**: Compares incoming requests against stored expectations
+4. **HTTP Client**: Handles forwarding requests to target servers
+5. **Logger**: Provides detailed logging of request matching and processing
+
+### Request Matching Mechanisms
+- Path matching (exact, regex, wildcard)
+- Method matching
+- Query parameter matching
+- Header matching
+- Cookie matching
+- Body matching (exact, JSON, JSONPath, XML, XPath)
+
+### Data Flow
+1. Client sends request to MockServer
+2. Request is processed through middleware
+3. Matcher attempts to find matching expectation
+4. If match found, corresponding action is executed:
+   - HTTP response is returned
+   - Request is forwarded to target server
+5. If no match found, default response is returned
+
+### Implementation Notes
+- Built on Express.js for HTTP handling
+- Uses functional programming paradigms
+- Implements comprehensive test suite
+- Supports both CommonJS and ESM imports 

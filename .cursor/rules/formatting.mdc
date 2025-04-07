@@ -1,0 +1,22 @@
+# Code Formatting Rules
+
+## Description
+Style and formatting rules for consistent code appearance.
+
+## Files
+**/*.js
+**/*.ts
+
+## Rules
+- Use 4 spaces for indentation
+- Maximum line length of 100 characters
+- Use semicolons at the end of statements
+- Use single quotes for strings
+- Use camelCase for variables and functions
+- Use PascalCase for classes and types
+- Place opening braces on the same line
+- Add spaces around operators
+- Use consistent spacing in function parameters
+- Keep one empty line between functions
+- Group imports by type (built-in, external, internal)
+- Sort imports alphabetically within groups 
