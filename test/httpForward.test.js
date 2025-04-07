@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { HttpScheme } from '../src/types/expectation.js';
-import { buildQueryString } from '../src/utils/httpClient.js';
+import { HttpScheme } from '../app/types/expectation.js';
+import { buildQueryString } from '../app/utils/httpClient.js';
 
 test('builds correct forwarding URL', async (t) => {
   const httpForward1 = {

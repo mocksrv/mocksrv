@@ -2,10 +2,10 @@
   "name": "mocksrv",
   "version": "0.1.0",
   "type": "module",
-  "main": "src/server.js",
+  "main": "app/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "start": "node app/server.js",
+    "dev": "nodemon app/server.js",
     "test": "node --import ./test/setup.js --test"
   },
   "keywords": [

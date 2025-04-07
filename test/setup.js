@@ -1,5 +1,5 @@
 // Test setup do wyciszenia logów podczas testów
-import { setSilentMode } from '../src/utils/logger.js';
+import { setSilentMode } from '../app/utils/logger.js';
 
 // Włącz tryb cichy dla wszystkich testów
 setSilentMode(true);

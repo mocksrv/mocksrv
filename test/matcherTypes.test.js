@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { matchesBody } from '../src/store/expectationStore.js';
+import { matchesBody } from '../app/store/expectationStore.js';
 
 test('matches XML using XPath matcher', async (t) => {
   const xmlString = `

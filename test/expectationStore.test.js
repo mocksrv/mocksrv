@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { matchesExpectation } from '../src/store/expectationStore.js';
+import { matchesExpectation } from '../app/store/expectationStore.js';
 
 test('matches basic HTTP expectation', async (t) => {
   const request = {

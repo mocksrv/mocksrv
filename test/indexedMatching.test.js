@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { addExpectation, findMatchingExpectation, clearExpectations } from '../src/store/expectationStore.js';
+import { addExpectation, findMatchingExpectation, clearExpectations } from '../app/store/expectationStore.js';
 
 test('finds expectations using method index', async (t) => {
   await clearExpectations();
