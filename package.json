@@ -13,6 +13,7 @@
     "test:request": "node --import ./test/setup.js --test test/request-handling/",
     "test:forwarding": "node --import ./test/setup.js --test test/http-forwarding/",
     "test:api": "node --import ./test/setup.js --test test/api/",
+    "test:coverage": "c8 --reporter=text --reporter=html node --import ./test/setup.js --test",
     "docker:build:prod": "docker build --target production -t mocksrv:prod .",
     "docker:build:dev": "docker build --target development -t mocksrv:dev .",
     "docker:run:prod": "docker run -p 1080:1080 -v \"$(pwd)/data:/app/data\" --name mocksrv-prod mocksrv:prod",
@@ -40,6 +41,7 @@
     "xpath": "^0.0.34"
   },
   "devDependencies": {
+    "c8": "^9.1.0",
     "nodemon": "^3.0.2",
     "pino-pretty": "^13.0.0"
   }

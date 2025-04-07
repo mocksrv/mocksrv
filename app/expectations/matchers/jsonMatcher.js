@@ -37,10 +37,12 @@ export function deepEquals(actual, expected) {
     return matchJsonUnitPlaceholder(actual, expected);
   }
 
+  // Ensure type equality
   if (typeof actual !== typeof expected) {
     return false;
   }
 
+  // Check for arrays
   if (Array.isArray(actual) && Array.isArray(expected)) {
     if (actual.length !== expected.length) {
       return false;
@@ -55,7 +57,13 @@ export function deepEquals(actual, expected) {
     return true;
   }
 
+  // Check objects
   if (typeof actual === 'object' && actual !== null && expected !== null) {
+    // Ensure both are objects or both are arrays
+    if (Array.isArray(actual) !== Array.isArray(expected)) {
+      return false;
+    }
+
     const actualKeys = Object.keys(actual);
     const expectedKeys = Object.keys(expected);
 
