@@ -3,51 +3,79 @@
  * @module expectations/persistence
  */
 
-import fs from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const STORAGE_FILE = path.join(__dirname, '../../data/expectations.json');
-
-/**
- * Ensures that the storage directory exists
- * @returns {Promise<void>}
- */
-async function ensureStorageDirectory() {
-  const storageDir = path.dirname(STORAGE_FILE);
-  try {
-    await fs.access(storageDir);
-  } catch {
-    await fs.mkdir(storageDir, { recursive: true });
-  }
-}
+// Default path for storing expectations
+const DEFAULT_PATH = './data/expectations.json';
 
 /**
- * Loads expectations from the storage file
- * @returns {Promise<Map<string, Object>>} Map of expectations by ID
+ * Loads expectations from the persistence file
+ * @param {string} [filepath] - Custom file path for loading (optional)
+ * @returns {Promise<Map<string, Object>>} Map of expectations
  */
-export async function loadExpectations() {
+export async function loadExpectations(filepath) {
+  const filePath = filepath || DEFAULT_PATH;
+
   try {
-    await ensureStorageDirectory();
-    const data = await fs.readFile(STORAGE_FILE, 'utf-8');
-    const expectations = JSON.parse(data);
-    return new Map(expectations.map(expectation => [expectation.id, expectation]));
-  } catch (error) {
-    if (error.code === 'ENOENT') {
+    // Ensure directory exists
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      console.log(`No existing expectations file found at ${filePath}, starting with empty store`);
       return new Map();
     }
-    throw error;
+
+    // Read and parse expectations file
+    const data = await fs.promises.readFile(filePath, 'utf8');
+    const jsonArray = JSON.parse(data);
+
+    // Convert array back to Map
+    const expectationsMap = new Map();
+    jsonArray.forEach(expectation => {
+      expectationsMap.set(expectation.id, expectation);
+    });
+
+    console.log(`Loaded ${expectationsMap.size} expectations from ${filePath}`);
+    return expectationsMap;
+  } catch (error) {
+    console.error(`Error loading expectations from ${filePath}:`, error);
+    return new Map();
   }
 }
 
 /**
- * Saves expectations to the storage file
- * @param {Map<string, Object>} expectations - Map of expectations by ID
+ * Saves expectations to the persistence file
+ * @param {Map<string, Object>} expectations - Map of expectations to save
+ * @param {string} [filepath] - Custom file path for saving (optional)
  * @returns {Promise<void>}
  */
-export async function saveExpectations(expectations) {
-  await ensureStorageDirectory();
-  const data = JSON.stringify(Array.from(expectations.values()), null, 2);
-  await fs.writeFile(STORAGE_FILE, data, 'utf-8');
+export async function saveExpectations(expectations, filepath) {
+  const filePath = filepath || DEFAULT_PATH;
+
+  try {
+    // Ensure directory exists
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Convert Map to array for JSON serialization
+    const jsonArray = Array.from(expectations.values());
+
+    // Write expectations to file
+    await fs.promises.writeFile(
+      filePath,
+      JSON.stringify(jsonArray, null, 2),
+      'utf8'
+    );
+
+    console.log(`Saved ${jsonArray.length} expectations to ${filePath}`);
+  } catch (error) {
+    console.error(`Error saving expectations to ${filePath}:`, error);
+  }
 } 

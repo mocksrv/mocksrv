@@ -172,8 +172,21 @@ The mock server provides a REST API for managing expectations:
 
 The server can be configured through environment variables:
 
-- `PORT` - Server port (default: 1080)
-- `LOG_LEVEL` - Logging level (default: info)
+- `NODE_PORT` - Server port (default: 1080)
+- `MOCKSERVER_HOST` - Host to bind to (default: 0.0.0.0)
+- `MOCKSERVER_LOG_LEVEL` - Logging level: error, warn, info, debug (default: info)
+- `MOCKSERVER_MAX_HEADER_SIZE` - Maximum size of HTTP headers in KB (default: 8192)
+- `MOCKSERVER_INITIALIZATION_JSON_PATH` - Path to JSON file with initial expectations (default: none)
+- `MOCKSERVER_WATCH_INITIALIZATION_JSON` - Watch initialization file for changes: true, false (default: false)
+- `MOCKSERVER_PERSIST_EXPECTATIONS` - Whether to persist expectations to disk: true, false (default: true)
+- `MOCKSERVER_PERSISTED_EXPECTATIONS_PATH` - Path to the file for storing persisted expectations (default: ./data/expectations.json)
+
+### Example Using Environment Variables
+
+```bash
+# Start the server on port 8080 with higher log level and custom expectations file
+MOCKSERVER_HOST=localhost NODE_PORT=8080 MOCKSERVER_LOG_LEVEL=debug MOCKSERVER_INITIALIZATION_JSON_PATH=./my-expectations.json npm start
+```
 
 ## Docker
 

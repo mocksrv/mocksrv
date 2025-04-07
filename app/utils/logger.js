@@ -1,4 +1,5 @@
 import pino from 'pino';
+import pkg from '../../package.json' assert { type: 'json' };
 
 let silentMode = false;
 
@@ -35,10 +36,11 @@ const logger = pino({
 /**
  * Logs server startup information
  * @param {number} port - The port number the server is running on
+ * @param {string} [host] - Host address
  */
-export function logServerStarted(port) {
+export function logServerStarted(port, host = '0.0.0.0') {
     if (silentMode) return;
-    logger.info(`MockServer started on port ${port}`);
+    logger.info(`MockServer started on ${host}:${port}`);
 }
 
 /**
@@ -181,12 +183,11 @@ export function logNoMatchingExpectation(req) {
  */
 export function logVersionInfo() {
     if (silentMode) return;
-    const version = process.env.npm_package_version || '1.0.0';
     logger.info({
         type: 'version_info',
         name: 'mockserver-node',
-        version
-    }, `MockServer Node.js v${version} started`);
+        version: pkg.version
+    }, `MockServer Node.js v${pkg.version} started`);
 }
 
 export default logger; 

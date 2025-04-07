@@ -20,13 +20,38 @@ import {
 // In-memory store for expectations
 let expectations = new Map();
 
+// Configuration flags
+let persistenceEnabled = true;
+let persistencePath = null;
+
+/**
+ * Sets the path for persistence storage
+ * @param {string} path - File path for storing expectations
+ */
+export function setPersistencePath(path) {
+  persistencePath = path;
+  console.log(`Expectation persistence path set to: ${path}`);
+}
+
+/**
+ * Disables expectation persistence
+ */
+export function disablePersistence() {
+  persistenceEnabled = false;
+  console.log('Expectation persistence disabled');
+}
+
 /**
  * Initializes the expectation store
  * @returns {Promise<void>}
  */
 export async function initializeStore() {
   try {
-    expectations = await loadExpectations();
+    if (persistenceEnabled) {
+      expectations = await loadExpectations(persistencePath);
+    } else {
+      expectations = new Map();
+    }
     initializeIndices(expectations);
   } catch (error) {
     console.error('Error initializing expectation store:', error);
@@ -48,7 +73,9 @@ export async function addExpectation(expectation) {
   expectations.set(id, newExpectation);
   indexExpectation(id, newExpectation);
 
-  await saveToFile();
+  if (persistenceEnabled) {
+    await saveToFile();
+  }
   logExpectationCreated(newExpectation);
   return id;
 }
@@ -78,7 +105,9 @@ export async function clearExpectations() {
   expectations.clear();
   initializeIndices(expectations);
 
-  await saveToFile();
+  if (persistenceEnabled) {
+    await saveToFile();
+  }
   logExpectationsCleared();
 }
 
@@ -96,7 +125,9 @@ export async function removeExpectation(id) {
   removeFromIndices(id, expectation);
   expectations.delete(id);
 
-  await saveToFile();
+  if (persistenceEnabled) {
+    await saveToFile();
+  }
   logExpectationRemoved(id);
   return true;
 }
@@ -115,7 +146,8 @@ export function findExpectationForRequest(request) {
  * @returns {Promise<void>}
  */
 async function saveToFile() {
-  await saveExpectations(expectations);
+  if (!persistenceEnabled) return;
+  await saveExpectations(expectations, persistencePath);
 }
 
 /**
