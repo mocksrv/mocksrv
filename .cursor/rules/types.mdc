@@ -1,7 +1,9 @@
+---
+description: Rules for defining and using types within the MockServer Node project.
+globs: 
+alwaysApply: false
+---
 # Type Definitions Rules
-
-## Description
-Rules for defining and using types within the MockServer Node project.
 
 ## Files
 src/types/*.js

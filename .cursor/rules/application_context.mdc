@@ -1,7 +1,9 @@
+---
+description: This document provides a comprehensive overview of the MockServer Node application, its architecture, and key functionality.
+globs: 
+alwaysApply: false
+---
 # MockServer Node - Application Context
-
-## Description
-This document provides a comprehensive overview of the MockServer Node application, its architecture, and key functionality.
 
 ## Files
 **/*

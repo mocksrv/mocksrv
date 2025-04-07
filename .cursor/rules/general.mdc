@@ -1,7 +1,9 @@
+---
+description: These rules apply to the entire MockServer Node project.
+globs: 
+alwaysApply: false
+---
 # General Rules for MockServer Node
-
-## Description
-These rules apply to the entire MockServer Node project.
 
 ## Files
 **/*.js

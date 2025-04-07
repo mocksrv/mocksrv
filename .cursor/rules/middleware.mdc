@@ -1,7 +1,9 @@
+---
+description: Rules specific to middleware components for handling HTTP requests and responses.
+globs: 
+alwaysApply: false
+---
 # Middleware Development Rules
-
-## Description
-Rules specific to middleware components for handling HTTP requests and responses.
 
 ## Files
 src/middleware/*.js

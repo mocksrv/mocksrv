@@ -1,7 +1,9 @@
+---
+description: Guidelines for writing and organizing tests in the MockServer Node project.
+globs: 
+alwaysApply: false
+---
 # Testing Rules
-
-## Description
-Guidelines for writing and organizing tests in the MockServer Node project.
 
 ## Files
 test/*.test.js

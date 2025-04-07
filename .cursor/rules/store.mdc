@@ -1,7 +1,9 @@
+---
+description: Guidelines for implementing expectation store and matching mechanisms.
+globs: 
+alwaysApply: false
+---
 # Store Components Rules
-
-## Description
-Guidelines for implementing expectation store and matching mechanisms.
 
 ## Files
 src/store/*.js
