@@ -229,23 +229,43 @@ This will open the development environment in a Docker container with all necess
 
 While MockSrv is inspired by MockServer, it offers a different approach and implementation:
 
-### Feature Comparison
+### Feature Comparison and Roadmap
 
-| Feature | MockSrv | MockServer | Notes |
-|---------|---------|------------|-------|
-| HTTP Mocking | ✅ Yes | ✅ Yes | Both support basic HTTP request/response mocking |
-| JSON Matching | ✅ Yes | ✅ Yes | Both support JSON matching |
-| JSONPath | ✅ Yes | ✅ Yes | Both support JSONPath expressions |
-| XPath | ✅ Yes | ✅ Yes | Both support XPath for XML matching |
-| Regex Matching | ✅ Yes | ✅ Yes | Both support regex pattern matching |
-| Forward Requests | ✅ Yes | ✅ Yes | Both can forward requests to other servers |
-| OpenAPI/Swagger | ❌ No | ✅ Yes | MockServer has OpenAPI spec support |
-| HTTPS/TLS | ❌ Basic | ✅ Advanced | MockServer has more TLS features |
-| Expectation Persistence | ✅ Yes | ✅ Yes | Both support saving expectations |
-| Verification | ❌ No | ✅ Yes | MockServer can verify interactions |
-| WebSockets | ❌ No | ✅ Yes | MockServer supports WebSocket mocking |
-| Authentication | ❌ No | ✅ Yes | MockServer has authentication mechanisms |
-| CORS | ❌ No | ✅ Yes | MockServer has built-in CORS support |
+| Feature | MockServer | MockSrv (current) | Status |
+|---------|----------------|---------------------------|--------|
+| Basic request matching | ✅ | ✅ | Implemented |
+| Method and path matching | ✅ | ✅ | Implemented |
+| Header matching | ✅ | ✅ | Implemented |
+| Query params matching | ✅ | ✅ | Implemented |
+| JSON body matching | ✅ | ✅ | Implemented |
+| JsonPath matching | ✅ | ❌ | Planned |
+| JSON Schema validation | ✅ | ❌ | Planned |
+| XPath matching for XML | ✅ | ❌ | Not planned |
+| RegEx matching for all fields | ✅ | ⚠️ (partial) | Planned |
+| Conditional matching | ✅ | ❌ | Planned |
+| OpenAPI/Swagger support | ✅ | ❌ | Not planned |
+| Dynamic responses (callback classes) | ✅ | ❌ | Planned |
+| Response templates | ✅ | ❌ | Planned |
+| HTTP error simulation | ✅ | ❌ | Planned |
+| Request forwarding | ✅ | ✅ | Implemented |
+| Request modification before forwarding | ✅ | ❌ | Planned |
+| Request verification | ✅ | ❌ | Planned |
+| Request history | ✅ | ❌ | Planned |
+| Advanced logging | ✅ | ⚠️ (basic) | Planned |
+| Node.js client library | ❌ | ❌ | Not planned |
+| Testing framework integration | ✅ (Java) | ❌ | Not planned |
+| Admin UI | ✅ | ❌ | Not planned |
+| HTTPS proxy | ✅ | ❌ | Planned |
+| WebSockets support | ✅ | ❌ | Not planned |
+| TLS/SSL support | ✅ | ❌ | Planned |
+| Authentication & authorization | ✅ | ❌ | Not planned |
+
+**Legend:**
+- ✅ - Implemented
+- ⚠️ - Partially implemented
+- ❌ - Not implemented
+
+The implementation order of planned features will be driven by current project needs and community feedback.
 
 ### Why Choose MockSrv?
 

@@ -1,4 +1,9 @@
 /**
+ * Types for expectations
+ * @module expectations/types
+ */
+
+/**
  * Types of expectations supported by the MockServer
  * @enum {string}
  */
@@ -104,92 +109,5 @@ export function createHttpExpectation({
       } : undefined
     },
     httpResponse: response
-  };
-}
-
-/**
- * Creates an OpenAPI expectation
- * @param {Object} params - Expectation parameters
- * @param {string} [params.id] - Expectation ID
- * @param {Object} params.spec - OpenAPI specification
- * @param {string} params.operationId - Operation ID from the spec
- * @param {Object} [params.parameters] - Operation parameters
- * @param {Object} params.response - Response configuration
- * @returns {Object} OpenAPI expectation
- */
-export function createOpenApiExpectation({
-  id,
-  spec,
-  operationId,
-  parameters,
-  response
-}) {
-  return {
-    id,
-    type: ExpectationType.OPEN_API,
-    openApiRequest: {
-      spec,
-      operationId,
-      parameters
-    },
-    httpResponse: response
-  };
-}
-
-/**
- * Creates a GraphQL expectation
- * @param {Object} params - Expectation parameters
- * @param {string} [params.id] - Expectation ID
- * @param {string} [params.operationName] - GraphQL operation name
- * @param {string} params.query - GraphQL query
- * @param {Object} [params.variables] - Query variables
- * @param {Object} params.response - Response configuration
- * @returns {Object} GraphQL expectation
- */
-export function createGraphQLExpectation({
-  id,
-  operationName,
-  query,
-  variables,
-  response
-}) {
-  return {
-    id,
-    type: ExpectationType.GRAPHQL,
-    graphQLRequest: {
-      operationName,
-      query,
-      variables
-    },
-    httpResponse: response
-  };
-}
-
-/**
- * Creates a WebSocket expectation
- * @param {Object} params - Expectation parameters
- * @param {string} [params.id] - Expectation ID
- * @param {string} params.path - WebSocket path
- * @param {string[]} [params.subProtocols] - WebSocket subprotocols
- * @param {*} [params.message] - Expected message
- * @param {Object} params.response - Response configuration
- * @returns {Object} WebSocket expectation
- */
-export function createWebSocketExpectation({
-  id,
-  path,
-  subProtocols,
-  message,
-  response
-}) {
-  return {
-    id,
-    type: ExpectationType.WEBSOCKET,
-    webSocketRequest: {
-      path,
-      subProtocols,
-      message
-    },
-    webSocketResponse: response
   };
 } 
