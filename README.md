@@ -1,0 +1,223 @@
+# MockSrv
+
+> ⚠️ **Warning**: This project is under active development and may be unstable before reaching version 1.0. API and functionality may change between releases. Use in production environments at your own risk.
+
+MockSrv is a flexible and powerful mock server implementation in Node.js that allows you to easily simulate API responses for testing and development purposes. It's designed to be a drop-in replacement for the original MockServer, offering compatible API with significantly lower resource requirements.
+
+## Features
+
+- HTTP request mocking with flexible matching rules
+- Support for various response types (JSON, text, XML)
+- Request forwarding capabilities
+- JSON path and XPath matching
+- Regular expression pattern matching
+- Configurable response delays
+- Wildcard path matching
+- Priority-based expectation handling
+- Persistent storage of expectations
+- Comprehensive logging system
+
+## Quick Start
+
+Create an expectation using the REST API:
+
+```bash
+curl -X PUT "http://localhost:1080/mockserver/expectation" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/users"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {
+        "users": [
+          { "id": 1, "name": "John" },
+          { "id": 2, "name": "Jane" }
+        ]
+      }
+    }
+  }'
+```
+
+Test the mock endpoint:
+
+```bash
+curl -X GET "http://localhost:1080/api/users"
+```
+
+## API Reference
+
+### Creating Expectations
+
+```javascript
+// Basic expectation
+{
+  httpRequest: {
+    method: 'POST',
+    path: '/api/data',
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: {
+      type: 'json',
+      value: { key: 'value' }
+    }
+  },
+  httpResponse: {
+    statusCode: 201,
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: {
+      status: 'created'
+    }
+  }
+}
+```
+
+### Request Matching
+
+The server supports various matching strategies:
+
+- Exact matching
+- JSON/XML body matching
+- JSONPath expressions
+- XPath queries
+- Regular expressions
+- Wildcard paths
+
+### Response Configuration
+
+You can configure responses with:
+
+- Status codes
+- Custom headers
+- Response bodies (JSON, text, XML)
+- Response delays
+- Forward to other servers
+
+## Examples
+
+### JSON Matching
+
+Create an expectation with JSON body matching:
+
+```bash
+curl -X PUT "http://localhost:1080/mockserver/expectation" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "httpRequest": {
+      "method": "POST",
+      "path": "/api/users",
+      "body": {
+        "type": "json",
+        "value": {
+          "name": "${json-unit.any-string}",
+          "age": "${json-unit.any-number}"
+        }
+      }
+    },
+    "httpResponse": {
+      "statusCode": 201,
+      "body": {
+        "status": "created"
+      }
+    }
+  }'
+```
+
+Test the endpoint:
+
+```bash
+curl -X POST "http://localhost:1080/api/users" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Alice", "age": 30}'
+```
+
+### Request Forwarding
+
+Configure a request to be forwarded to another server:
+
+```bash
+curl -X PUT "http://localhost:1080/mockserver/expectation" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/external"
+    },
+    "httpForward": {
+      "host": "api.external.com",
+      "port": 443,
+      "scheme": "HTTPS"
+    }
+  }'
+```
+
+When calling `/api/external`, the request will be forwarded to `https://api.external.com:443`:
+
+## REST API
+
+The mock server provides a REST API for managing expectations:
+
+- `PUT /mockserver/expectation` - Create new expectation
+- `GET /mockserver/expectation` - List all expectations
+- `GET /mockserver/expectation/:id` - Get specific expectation
+- `DELETE /mockserver/expectation/:id` - Delete specific expectation
+- `DELETE /mockserver/expectation` - Clear all expectations
+
+## Configuration
+
+The server can be configured through environment variables:
+
+- `PORT` - Server port (default: 1080)
+- `LOG_LEVEL` - Logging level (default: info)
+
+## Comparison with MockServer
+
+While MockSrv is inspired by MockServer, it offers a different approach and implementation:
+
+### Feature Comparison
+
+| Feature | MockSrv | MockServer | Notes |
+|---------|---------|------------|-------|
+| HTTP Mocking | ✅ Yes | ✅ Yes | Both support basic HTTP request/response mocking |
+| JSON Matching | ✅ Yes | ✅ Yes | Both support JSON matching |
+| JSONPath | ✅ Yes | ✅ Yes | Both support JSONPath expressions |
+| XPath | ✅ Yes | ✅ Yes | Both support XPath for XML matching |
+| Regex Matching | ✅ Yes | ✅ Yes | Both support regex pattern matching |
+| Forward Requests | ✅ Yes | ✅ Yes | Both can forward requests to other servers |
+| OpenAPI/Swagger | ❌ No | ✅ Yes | MockServer has OpenAPI spec support |
+| HTTPS/TLS | ❌ Basic | ✅ Advanced | MockServer has more TLS features |
+| Expectation Persistence | ✅ Yes | ✅ Yes | Both support saving expectations |
+| Verification | ❌ No | ✅ Yes | MockServer can verify interactions |
+| WebSockets | ❌ No | ✅ Yes | MockServer supports WebSocket mocking |
+| Authentication | ❌ No | ✅ Yes | MockServer has authentication mechanisms |
+| CORS | ❌ No | ✅ Yes | MockServer has built-in CORS support |
+
+### Why Choose MockSrv?
+
+- **Active Development**: Unlike the original MockServer, MockSrv is actively maintained and regularly updated
+- **Simplicity**: If you need a lightweight, easy-to-use mock server without complex setup
+- **Resource Efficiency**: If you need a mock server with minimal resource usage
+- **Modern Development**: If you prefer modern JavaScript features and workflows
+- **Minimal Dependencies**: If you want fewer external dependencies
+- **Quick Setup**: If you need to get started quickly without extensive configuration
+- **Drop-in Replacement**: Designed to be compatible with the original MockServer API, allowing for easy migration from existing MockServer implementations
+
+MockSrv is designed as a simpler, more lightweight alternative to MockServer for JavaScript/Node.js developers who need the core functionality without the complexity and resource overhead of the Java-based MockServer.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with [Express](https://expressjs.com/)
+- Inspired by [MockServer](https://www.mock-server.com/) (no longer maintained) - this project aims to provide a modern, actively maintained alternative
