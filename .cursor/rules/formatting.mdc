@@ -22,3 +22,20 @@ alwaysApply: false
 - Keep one empty line between functions
 - Group imports by type (built-in, external, internal)
 - Sort imports alphabetically within groups 
+
+## JSDoc Rules
+- Write all JSDoc documentation in English
+- Use proper English grammar and punctuation
+- Document all public functions, classes, and interfaces
+- Include parameter descriptions with types
+- Document return values and their types
+- Use appropriate JSDoc tags (@param, @returns, @type, etc.)
+- Keep descriptions clear and concise
+- Document optional parameters with square brackets
+- Use @enum for enumerated types
+- Document thrown errors with @throws
+- Include examples for complex functions with @example
+- Use @typedef for complex type definitions
+- Document async functions with @async and @returns {Promise<Type>}
+- Document callbacks with @callback
+- Document deprecated features with @deprecated 

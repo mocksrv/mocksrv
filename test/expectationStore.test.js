@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert';
 import { matchesExpectation } from '../src/store/expectationStore.js';
 
-// Test dla prostego dopasowania oczekiwania
 test('matches basic HTTP expectation', async (t) => {
   const request = {
     method: 'GET',
@@ -25,7 +24,6 @@ test('matches basic HTTP expectation', async (t) => {
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test dla dopasowania z nagłówkami
 test('matches HTTP expectation with headers', async (t) => {
   const request = {
     method: 'GET',
@@ -52,7 +50,6 @@ test('matches HTTP expectation with headers', async (t) => {
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test dla dopasowania z parametrami query
 test('matches HTTP expectation with query parameters', async (t) => {
   const request = {
     method: 'GET',
@@ -80,7 +77,6 @@ test('matches HTTP expectation with query parameters', async (t) => {
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test dla dopasowania z body JSON
 test('matches HTTP expectation with JSON body', async (t) => {
   const request = {
     method: 'POST',
@@ -131,7 +127,6 @@ test('matches HTTP expectation with JSON body', async (t) => {
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test dla dopasowania z JSONPath
 test('matches HTTP expectation with JSONPath body', async (t) => {
   const request = {
     method: 'POST',
@@ -181,7 +176,6 @@ test('matches HTTP expectation with JSONPath body', async (t) => {
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test dla dopasowania z flagą "not"
 test('matches HTTP expectation with "not" flag in headers', async (t) => {
   const request = {
     method: 'GET',
@@ -208,7 +202,6 @@ test('matches HTTP expectation with "not" flag in headers', async (t) => {
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test dla dopasowania z MatchType.STRICT
 test('matches HTTP expectation with STRICT matchType', async (t) => {
   const request = {
     method: 'POST',
@@ -244,7 +237,6 @@ test('matches HTTP expectation with STRICT matchType', async (t) => {
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test dla dopasowania z MatchType.ONLY_MATCHING_FIELDS
 test('matches HTTP expectation with ONLY_MATCHING_FIELDS matchType', async (t) => {
   const request = {
     method: 'POST',
@@ -283,7 +275,6 @@ test('matches HTTP expectation with ONLY_MATCHING_FIELDS matchType', async (t) =
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test dla dopasowania z JSONUnit placeholders
 test('matches HTTP expectation with JSONUnit placeholders', async (t) => {
   const request = {
     method: 'POST',
@@ -320,7 +311,6 @@ test('matches HTTP expectation with JSONUnit placeholders', async (t) => {
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test dla dopasowania ścieżki z wzorcem wildcard na końcu
 test('matches path with wildcard at the end', async (t) => {
   const request = {
     method: 'GET',
@@ -341,7 +331,6 @@ test('matches path with wildcard at the end', async (t) => {
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test dla dopasowania ścieżki z wzorcem wildcard w środku
 test('matches path with wildcard in the middle', async (t) => {
   const request = {
     method: 'GET',
@@ -362,7 +351,6 @@ test('matches path with wildcard in the middle', async (t) => {
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test dla dopasowania ścieżki z wieloma wzorcami wildcard
 test('matches path with multiple wildcards', async (t) => {
   const request = {
     method: 'GET',
@@ -383,7 +371,6 @@ test('matches path with multiple wildcards', async (t) => {
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test dla niedopasowania ścieżki z wzorcem wildcard
 test('does not match path with wildcard when pattern is different', async (t) => {
   const request = {
     method: 'GET',
@@ -404,7 +391,6 @@ test('does not match path with wildcard when pattern is different', async (t) =>
   assert.strictEqual(matchesExpectation(request, expectation), false);
 });
 
-// Test dla dopasowania ścieżki z wzorcem wildcard i flagą not
 test('matches path with wildcard and not flag', async (t) => {
   const request = {
     method: 'GET',
@@ -428,9 +414,7 @@ test('matches path with wildcard and not flag', async (t) => {
   assert.strictEqual(matchesExpectation(request, expectation), true);
 });
 
-// Test sprawdzający, czy oczekiwania o wyższym priorytecie są wybierane
 test('selects expectation with higher priority', async (t) => {
-  // Przygotowujemy request
   const request = {
     method: 'GET',
     path: '/api/test',
@@ -438,13 +422,12 @@ test('selects expectation with higher priority', async (t) => {
     headers: {},
     body: null
   };
-  
-  // Symulowane oczekiwania z różnymi priorytetami
+
   const mockExpectations = [
     {
       id: '1',
       type: 'http',
-      priority: 0, // domyślny priorytet
+      priority: 0,
       httpRequest: {
         method: 'GET',
         path: '/api/test'
@@ -453,7 +436,7 @@ test('selects expectation with higher priority', async (t) => {
     {
       id: '2',
       type: 'http',
-      priority: 10, // wyższy priorytet
+      priority: 10, 
       httpRequest: {
         method: 'GET',
         path: '/api/test'
@@ -462,33 +445,28 @@ test('selects expectation with higher priority', async (t) => {
     {
       id: '3',
       type: 'http',
-      priority: 5, // średni priorytet
+      priority: 5,
       httpRequest: {
         method: 'GET',
         path: '/api/test'
       }
     }
   ];
-  
-  // Filtrujemy oczekiwania (wszystkie pasują)
+
   const matchingExpectations = mockExpectations;
-  
-  // Sortujemy według priorytetu (malejąco)
+
   matchingExpectations.sort((a, b) => {
     if (b.priority !== a.priority) {
       return b.priority - a.priority;
     }
     return b.id.localeCompare(a.id);
   });
-  
-  // Sprawdzenie, czy zwrócono oczekiwanie o najwyższym priorytecie
+
   assert.strictEqual(matchingExpectations[0].id, '2');
   assert.strictEqual(matchingExpectations[0].priority, 10);
 });
 
-// Test sprawdzający, czy gdy priorytety są równe, wybierane jest ostatnio dodane oczekiwanie
 test('selects most recently added expectation when priorities are equal', async (t) => {
-  // Przygotowujemy request
   const request = {
     method: 'GET',
     path: '/api/test',
@@ -496,9 +474,7 @@ test('selects most recently added expectation when priorities are equal', async 
     headers: {},
     body: null
   };
-  
-  // Symulowane oczekiwania z tymi samymi priorytetami, ale różnymi ID 
-  // (zakładamy, że większe ID = nowsze oczekiwanie)
+
   const mockExpectations = [
     {
       id: 'aaa',
@@ -510,7 +486,7 @@ test('selects most recently added expectation when priorities are equal', async 
       }
     },
     {
-      id: 'zzz', // większe ID = nowsze
+      id: 'zzz',
       type: 'http',
       priority: 5,
       httpRequest: {
@@ -519,18 +495,15 @@ test('selects most recently added expectation when priorities are equal', async 
       }
     }
   ];
-  
-  // Filtrujemy oczekiwania (wszystkie pasują)
+
   const matchingExpectations = mockExpectations;
-  
-  // Sortujemy według priorytetu (malejąco), a potem według ID (malejąco)
+
   matchingExpectations.sort((a, b) => {
     if (b.priority !== a.priority) {
       return b.priority - a.priority;
     }
     return b.id.localeCompare(a.id);
   });
-  
-  // Sprawdzenie, czy zwrócono nowsze oczekiwanie
+
   assert.strictEqual(matchingExpectations[0].id, 'zzz');
 }); 

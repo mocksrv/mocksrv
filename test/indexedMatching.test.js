@@ -2,12 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert';
 import { addExpectation, findMatchingExpectation, clearExpectations } from '../src/store/expectationStore.js';
 
-// Test weryfikujący indeksowanie według metody HTTP
 test('finds expectations using method index', async (t) => {
-  // Najpierw wyczyść wszystkie oczekiwania
   await clearExpectations();
-  
-  // Dodaj oczekiwania dla różnych metod
+
   const getId = await addExpectation({
     type: 'http',
     httpRequest: {
@@ -25,8 +22,7 @@ test('finds expectations using method index', async (t) => {
     },
     httpResponse: { status: 201 }
   });
-  
-  // Sprawdź, czy indeks metod działa prawidłowo
+
   const getRequest = {
     method: 'GET',
     path: '/api/resource',
@@ -50,12 +46,9 @@ test('finds expectations using method index', async (t) => {
   assert.strictEqual(postResult.id, postId);
 });
 
-// Test weryfikujący indeksowanie według segmentu bazowego ścieżki
 test('finds expectations using path segment index', async (t) => {
-  // Najpierw wyczyść wszystkie oczekiwania
   await clearExpectations();
-  
-  // Dodaj oczekiwania dla różnych ścieżek bazowych
+
   const apiId = await addExpectation({
     type: 'http',
     httpRequest: {
@@ -73,8 +66,7 @@ test('finds expectations using path segment index', async (t) => {
     },
     httpResponse: { status: 200 }
   });
-  
-  // Sprawdź, czy indeks ścieżek działa prawidłowo
+
   const apiRequest = {
     method: 'GET',
     path: '/api/resource',
@@ -98,12 +90,9 @@ test('finds expectations using path segment index', async (t) => {
   assert.strictEqual(authResult.id, authId);
 });
 
-// Test weryfikujący prawidłowe indeksowanie oczekiwań z wildcardami
 test('finds expectations with wildcards in paths', async (t) => {
-  // Najpierw wyczyść wszystkie oczekiwania
   await clearExpectations();
-  
-  // Dodaj oczekiwanie z wildcardem
+
   const wildcardId = await addExpectation({
     type: 'http',
     httpRequest: {
@@ -112,8 +101,7 @@ test('finds expectations with wildcards in paths', async (t) => {
     },
     httpResponse: { status: 200 }
   });
-  
-  // Sprawdź, czy oczekiwanie z wildcardem jest prawidłowo znajdowane
+
   const request = {
     method: 'GET',
     path: '/api/users/123',
@@ -121,17 +109,14 @@ test('finds expectations with wildcards in paths', async (t) => {
     headers: {},
     body: null
   };
-  
+
   const result = findMatchingExpectation(request);
   assert.strictEqual(result.id, wildcardId);
 });
 
-// Test weryfikujący złożone indeksowanie (metoda + ścieżka)
 test('finds expectations using combined method and path indices', async (t) => {
-  // Najpierw wyczyść wszystkie oczekiwania
   await clearExpectations();
-  
-  // Dodaj wiele oczekiwań z różnymi kombinacjami metod i ścieżek
+
   const getApiId = await addExpectation({
     type: 'http',
     httpRequest: {
@@ -158,8 +143,7 @@ test('finds expectations using combined method and path indices', async (t) => {
     },
     httpResponse: { status: 200 }
   });
-  
-  // Dodaj jeszcze 10 innych oczekiwań, aby sprawdzić wydajność
+
   for (let i = 0; i < 10; i++) {
     await addExpectation({
       type: 'http',
@@ -170,8 +154,7 @@ test('finds expectations using combined method and path indices', async (t) => {
       httpResponse: { status: 200 }
     });
   }
-  
-  // Sprawdź, czy oczekiwanie jest prawidłowo znajdowane mimo dużej liczby innych oczekiwań
+
   const request = {
     method: 'GET',
     path: '/api/users',
@@ -184,12 +167,9 @@ test('finds expectations using combined method and path indices', async (t) => {
   assert.strictEqual(result.id, getApiId);
 });
 
-// Test weryfikujący usuwanie oczekiwań z indeksów
 test('removes expectations from indices when deleted', async (t) => {
-  // Najpierw wyczyść wszystkie oczekiwania
   await clearExpectations();
-  
-  // Dodaj oczekiwanie
+
   const id = await addExpectation({
     type: 'http',
     httpRequest: {
@@ -198,11 +178,9 @@ test('removes expectations from indices when deleted', async (t) => {
     },
     httpResponse: { status: 200 }
   });
-  
-  // Usuń to oczekiwanie
+
   await clearExpectations();
-  
-  // Sprawdź, czy jest prawidłowo usunięte z indeksów
+
   const request = {
     method: 'GET',
     path: '/api/resource',

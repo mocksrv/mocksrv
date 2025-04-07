@@ -1,19 +1,27 @@
 import pino from 'pino';
 
-// Konfiguracja flagi wyciszenia logów - przydatne podczas testów
 let silentMode = false;
 
-// Funkcja do włączania/wyłączania trybu cichego
+/**
+ * Sets the silent mode for logging
+ * @param {boolean} silent - Whether to enable silent mode
+ */
 export function setSilentMode(silent) {
     silentMode = !!silent;
 }
 
-// Funkcja do sprawdzania aktualnego stanu trybu cichego
+/**
+ * Checks if silent mode is enabled
+ * @returns {boolean} True if silent mode is enabled
+ */
 export function isSilentMode() {
     return silentMode;
 }
 
-// Konfiguracja loggera pino
+/**
+ * Pino logger instance with pretty printing
+ * @type {import('pino').Logger}
+ */
 const logger = pino({
     transport: {
         target: 'pino-pretty',
@@ -24,13 +32,24 @@ const logger = pino({
     level: 'info'
 });
 
-// Logowanie inicjalizacji serwera
+/**
+ * Logs server startup information
+ * @param {number} port - The port number the server is running on
+ */
 export function logServerStarted(port) {
     if (silentMode) return;
     logger.info(`MockServer started on port ${port}`);
 }
 
-// Logowanie odebranego żądania
+/**
+ * Logs incoming request details
+ * @param {Object} request - The request object
+ * @param {string} request.method - HTTP method
+ * @param {string} request.path - Request path
+ * @param {Object} request.query - Query parameters
+ * @param {Object} request.headers - Request headers
+ * @param {*} request.body - Request body
+ */
 export function logRequestReceived(request) {
     if (silentMode) return;
     logger.info({
@@ -43,7 +62,10 @@ export function logRequestReceived(request) {
     }, `Request received: ${request.method} ${request.path}`);
 }
 
-// Logowanie wysłanej odpowiedzi
+/**
+ * Logs outgoing response details
+ * @param {import('express').Response} response - Express response object
+ */
 export function logResponseSent(response) {
     if (silentMode) return;
     logger.info({
@@ -53,7 +75,10 @@ export function logResponseSent(response) {
     }, `Response sent with status: ${response.statusCode}`);
 }
 
-// Logowanie utworzonego oczekiwania
+/**
+ * Logs when a new expectation is created
+ * @param {Object} expectation - The created expectation object
+ */
 export function logExpectationCreated(expectation) {
     if (silentMode) return;
     logger.info({
@@ -62,7 +87,10 @@ export function logExpectationCreated(expectation) {
     }, `Expectation created with ID: ${expectation.id}`);
 }
 
-// Logowanie usuniętego oczekiwania
+/**
+ * Logs when an expectation is removed
+ * @param {string} id - The ID of the removed expectation
+ */
 export function logExpectationRemoved(id) {
     if (silentMode) return;
     logger.info({
@@ -71,7 +99,9 @@ export function logExpectationRemoved(id) {
     }, `Expectation removed with ID: ${id}`);
 }
 
-// Logowanie wyczyszczenia wszystkich oczekiwań
+/**
+ * Logs when all expectations are cleared
+ */
 export function logExpectationsCleared() {
     if (silentMode) return;
     logger.info({
@@ -79,7 +109,11 @@ export function logExpectationsCleared() {
     }, 'All expectations cleared');
 }
 
-// Logowanie błędu
+/**
+ * Logs error messages
+ * @param {string} message - Error message
+ * @param {Error} error - Error object
+ */
 export function logError(message, error) {
     if (silentMode) return;
     logger.error({
@@ -88,7 +122,14 @@ export function logError(message, error) {
     }, `Error: ${message}`);
 }
 
-// Logowanie przekazywanego żądania
+/**
+ * Logs details of a forwarded request
+ * @param {string} url - Target URL
+ * @param {Object} options - Request options
+ * @param {string} options.method - HTTP method
+ * @param {Object} options.headers - Request headers
+ * @param {*} options.body - Request body
+ */
 export function logForwardedRequest(url, options) {
     if (silentMode) return;
     logger.info({
@@ -100,7 +141,13 @@ export function logForwardedRequest(url, options) {
     }, `Forwarding request: ${options.method} ${url}`);
 }
 
-// Logowanie odpowiedzi przekazanej
+/**
+ * Logs details of a forwarded response
+ * @param {Object} response - The forwarded response
+ * @param {number} response.status - HTTP status code
+ * @param {Object} response.headers - Response headers
+ * @param {*} response.body - Response body
+ */
 export function logForwardedResponse(response) {
     if (silentMode) return;
     logger.info({
@@ -113,6 +160,10 @@ export function logForwardedResponse(response) {
     }, `Forwarded response received with status: ${response.status}`);
 }
 
+/**
+ * Logs when no matching expectation is found for a request
+ * @param {import('express').Request} req - Express request object
+ */
 export function logNoMatchingExpectation(req) {
     if (silentMode) return;
     logger.warn({
@@ -125,6 +176,9 @@ export function logNoMatchingExpectation(req) {
     }, 'No matching expectation found');
 }
 
+/**
+ * Logs MockServer version information
+ */
 export function logVersionInfo() {
     if (silentMode) return;
     const version = process.env.npm_package_version || '1.0.0';

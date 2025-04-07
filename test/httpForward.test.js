@@ -3,9 +3,7 @@ import assert from 'node:assert';
 import { HttpScheme } from '../src/types/expectation.js';
 import { buildQueryString } from '../src/utils/httpClient.js';
 
-// Test dla budowania URL
 test('builds correct forwarding URL', async (t) => {
-  // Test dla prostego URL bez portu (domyślne porty)
   const httpForward1 = {
     host: 'example.com',
     port: 80,
@@ -20,8 +18,7 @@ test('builds correct forwarding URL', async (t) => {
   const expectedUrl1 = 'http://example.com/api/resource';
   const url1 = `http://${httpForward1.host}${httpForward1.port === 80 ? '' : `:${httpForward1.port}`}${request1.path}`;
   assert.strictEqual(url1, expectedUrl1);
-  
-  // Test dla HTTPS z niestandardowym portem
+
   const httpForward2 = {
     host: 'secure.example.com',
     port: 8443,
@@ -36,8 +33,7 @@ test('builds correct forwarding URL', async (t) => {
   const expectedUrl2 = 'https://secure.example.com:8443/api/secure-resource';
   const url2 = `https://${httpForward2.host}${httpForward2.port === 443 ? '' : `:${httpForward2.port}`}${request2.path}`;
   assert.strictEqual(url2, expectedUrl2);
-  
-  // Test dla parametrów zapytania
+
   const request3 = {
     path: '/api/search',
     query: {
@@ -52,12 +48,11 @@ test('builds correct forwarding URL', async (t) => {
   assert.strictEqual(queryString, expectedQueryString);
 });
 
-// Test dla obsługi nagłówków - można go rozszerzyć
 test('properly handles request headers', async (t) => {
   const headers = {
     'accept': 'application/json',
     'content-type': 'application/json',
-    'host': 'mockserver.com', // ten powinien być usunięty podczas przekazywania
+    'host': 'mockserver.com',
     'user-agent': 'test-agent'
   };
   

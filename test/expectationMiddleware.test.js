@@ -1,13 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { expectationMiddleware } from '../src/middleware/expectationMiddleware.js';
 
-// Funkcja pomocnicza do opóźnienia
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Test dla middleware gdy znaleziono pasujące oczekiwanie
 test('middleware should send response for matching expectation', async (t) => {
   // Arrange
   let responseSent = false;
@@ -50,9 +47,7 @@ test('middleware should send response for matching expectation', async (t) => {
     assert.fail('next() should not be called');
   };
 
-  // Funkcja symulująca funkcjonalność middleware
   const handleRequest = (req, res, next) => {
-    // Znalezienie pasującego oczekiwania
     const matchingExpectation = {
       id: 'test-id',
       type: 'http',
@@ -111,7 +106,6 @@ test('middleware should send response for matching expectation', async (t) => {
   assert.strictEqual(responseSent, true);
 });
 
-// Test dla middleware gdy nie znaleziono pasującego oczekiwania
 test('middleware should call next() when no matching expectation found', async (t) => {
   // Arrange
   let nextCalled = false;
@@ -136,10 +130,8 @@ test('middleware should call next() when no matching expectation found', async (
   const next = () => {
     nextCalled = true;
   };
-  
-  // Funkcja symulująca funkcjonalność middleware
+
   const handleRequest = (req, res, next) => {
-    // Symulujemy brak znalezienia pasującego oczekiwania
     const matchingExpectation = null;
     
     if (!matchingExpectation) {
@@ -156,7 +148,6 @@ test('middleware should call next() when no matching expectation found', async (
   assert.strictEqual(nextCalled, true);
 });
 
-// Test dla middleware z opóźnieniem (delay)
 test('middleware should respect delay in response', async (t) => {
   // Arrange
   let responseSent = false;
@@ -190,10 +181,8 @@ test('middleware should respect delay in response', async (t) => {
   const next = () => {
     assert.fail('next() should not be called');
   };
-  
-  // Funkcja symulująca funkcjonalność middleware
+
   const handleRequest = async (req, res, next) => {
-    // Znalezienie pasującego oczekiwania z opóźnieniem
     const matchingExpectation = {
       id: 'test-delay-id',
       type: 'http',
@@ -222,7 +211,6 @@ test('middleware should respect delay in response', async (t) => {
       const { headers, body, delay: responseDelay } = httpResponse;
       
       const sendResponse = async () => {
-        // Opóźnienie odpowiedzi
         if (responseDelay) {
           await delay(responseDelay);
         }

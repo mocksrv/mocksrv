@@ -2,9 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert';
 import { matchesBody } from '../src/store/expectationStore.js';
 
-// Test dla XPATH matchera
 test('matches XML using XPath matcher', async (t) => {
-  // XML do testowania
   const xmlString = `
     <store>
       <book category="reference">
@@ -21,18 +19,15 @@ test('matches XML using XPath matcher', async (t) => {
       </book>
     </store>
   `;
-  
-  // XPath, który powinien znaleźć książkę o kategorii "reference"
+
   const expectationBody = {
     type: 'xpath',
     xpath: '//book[@category="reference"]'
   };
-  
-  // Test XPath
+
   const result = matchesBody(xmlString, expectationBody);
   assert.strictEqual(result, true);
-  
-  // XPath, który nie powinien nic znaleźć
+
   const negativeExpectationBody = {
     type: 'xpath',
     xpath: '//book[@category="history"]'
@@ -42,22 +37,17 @@ test('matches XML using XPath matcher', async (t) => {
   assert.strictEqual(negativeResult, false);
 });
 
-// Test dla REGEX matchera
 test('matches string using RegEx matcher', async (t) => {
-  // String do testowania
   const testString = 'The quick brown fox jumps over the lazy dog';
-  
-  // Regex, który powinien dopasować się do stringa
+
   const expectationBody = {
     type: 'regex',
     regex: '.*?brown fox.*'
   };
-  
-  // Test RegEx
+
   const result = matchesBody(testString, expectationBody);
   assert.strictEqual(result, true);
-  
-  // Regex, który nie powinien się dopasować
+
   const negativeExpectationBody = {
     type: 'regex',
     regex: '.*?black cat.*'
@@ -67,9 +57,7 @@ test('matches string using RegEx matcher', async (t) => {
   assert.strictEqual(negativeResult, false);
 });
 
-// Test dla JSON z flagą "not"
 test('matches JSON with "not" flag', async (t) => {
-  // JSON do testowania
   const testJson = {
     menu: {
       id: "file",
@@ -82,8 +70,7 @@ test('matches JSON with "not" flag', async (t) => {
       }
     }
   };
-  
-  // Oczekiwanie z flagą not=true
+
   const expectationBody = {
     type: 'json',
     not: true,
@@ -100,12 +87,10 @@ test('matches JSON with "not" flag', async (t) => {
       }
     }
   };
-  
-  // Test JSON z flagą not
+
   const result = matchesBody(testJson, expectationBody);
   assert.strictEqual(result, true);
-  
-  // Oczekiwanie z flagą not=true, ale pasujące do JSON
+
   const negativeExpectationBody = {
     type: 'json',
     not: true,
@@ -127,9 +112,7 @@ test('matches JSON with "not" flag', async (t) => {
   assert.strictEqual(negativeResult, false);
 });
 
-// Test dla JSONUnit placeholders
 test('matches JSON with JSONUnit placeholders', async (t) => {
-  // JSON do testowania
   const testJson = {
     glossary: {
       title: "example glossary",
@@ -151,8 +134,7 @@ test('matches JSON with JSONUnit placeholders', async (t) => {
       }
     }
   };
-  
-  // Oczekiwanie z placeholderami JSONUnit
+
   const expectationBody = {
     type: 'json',
     value: {
@@ -175,20 +157,18 @@ test('matches JSON with JSONUnit placeholders', async (t) => {
       }
     }
   };
-  
-  // Test JSONUnit placeholders
+
   const result = matchesBody(testJson, expectationBody);
   assert.strictEqual(result, true);
-  
-  // Oczekiwanie z placeholderami JSONUnit, ale z błędnymi typami
+
   const negativeExpectationBody = {
     type: 'json',
     value: {
       glossary: {
-        title: "${json-unit.any-number}", // Błędny typ (string vs number)
+        title: "${json-unit.any-number}",
         GlossDiv: {
-          title: "${json-unit.any-boolean}", // Błędny typ (string vs boolean)
-          GlossList: "${json-unit.any-string}" // Błędny typ (object vs string)
+          title: "${json-unit.any-boolean}",
+          GlossList: "${json-unit.any-string}"
         }
       }
     }
@@ -198,9 +178,7 @@ test('matches JSON with JSONUnit placeholders', async (t) => {
   assert.strictEqual(negativeResult, false);
 });
 
-// Test dla JSONPath matchera
 test('matches JSON using JSONPath matcher', async (t) => {
-  // JSON do testowania
   const testJson = {
     store: {
       book: [
@@ -225,18 +203,15 @@ test('matches JSON using JSONPath matcher', async (t) => {
     },
     expensive: 10
   };
-  
-  // JSONPath, który powinien znaleźć autora pierwszej książki
+
   const expectationBody = {
     type: 'jsonPath',
     value: '$.store.book[0].author'
   };
-  
-  // Test JSONPath
+
   const result = matchesBody(testJson, expectationBody);
   assert.strictEqual(result, true);
-  
-  // JSONPath, który nie powinien nic znaleźć
+
   const negativeExpectationBody = {
     type: 'jsonPath',
     value: '$.store.book[3]'
