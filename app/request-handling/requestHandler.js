@@ -55,7 +55,6 @@ function calculateDelay(delayConfig) {
  * @returns {void}
  */
 export function requestHandler(req, res, next) {
-  // Skip if request is for the MockServer API
   if (req.path.startsWith('/mockserver')) {
     return next();
   }
@@ -116,24 +115,20 @@ async function handleResponse(request, res, expectation) {
  * @returns {Promise<void>}
  */
 async function sendMockResponse(res, httpResponse) {
-  // Apply delay if configured
   const delayMs = calculateDelay(httpResponse.delay);
   if (delayMs > 0) {
     await delay(delayMs);
   }
 
-  // Set status code
   const status = httpResponse.statusCode || httpResponse.status || 200;
   res.status(status);
 
-  // Set headers
   if (httpResponse.headers) {
     Object.entries(httpResponse.headers).forEach(([key, value]) => {
       res.set(key, value);
     });
   }
 
-  // Send body if present, otherwise end the response
   if (httpResponse.body) {
     res.send(httpResponse.body);
   } else {
@@ -151,7 +146,6 @@ async function sendMockResponse(res, httpResponse) {
  * @returns {Promise<void>}
  */
 async function sendForwardedResponse(request, res, httpForward) {
-  // Apply delay if configured
   const delayMs = calculateDelay(httpForward.delay);
   if (delayMs > 0) {
     await delay(delayMs);
@@ -160,14 +154,12 @@ async function sendForwardedResponse(request, res, httpForward) {
   try {
     const forwardedResponse = await forwardRequest(request, httpForward);
 
-    // Set headers from forwarded response
     if (forwardedResponse.headers) {
       Object.entries(forwardedResponse.headers).forEach(([key, value]) => {
         res.set(key, value);
       });
     }
 
-    // Set status and send body
     res.status(forwardedResponse.status);
 
     if (forwardedResponse.body) {

@@ -12,22 +12,17 @@ import { clearExpectationsHandler } from './handlers/expectations/clearExpectati
 
 const router = express.Router();
 
-// Create expectations
 router.put('/mockserver/expectation', createExpectationHandler);
 router.post('/mockserver/expectation', createExpectationHandler);
 
-// List expectations
 router.get('/mockserver/expectation', listExpectationsHandler);
 router.get('/mockserver/expectation/active', listExpectationsHandler);
 
-// Get specific expectation
 router.get('/mockserver/expectation/:id', getExpectationHandler);
 
-// Delete expectations
 router.delete('/mockserver/expectation/:id', deleteExpectationHandler);
 router.delete('/mockserver/expectation', clearExpectationsHandler);
 
-// Reset expectations (alias for clear)
 router.put('/mockserver/reset', clearExpectationsHandler);
 
 export default router; 

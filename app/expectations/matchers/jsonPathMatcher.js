@@ -12,7 +12,6 @@ import jsonpath from 'jsonpath';
  * @returns {boolean} True if matches
  */
 export function matchJsonPath(actual, expression) {
-  // Parse string to JSON if needed
   if (typeof actual === 'string') {
     try {
       actual = JSON.parse(actual);

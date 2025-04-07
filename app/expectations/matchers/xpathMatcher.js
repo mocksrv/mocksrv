@@ -14,7 +14,6 @@ import { DOMParser } from 'xmldom';
  */
 export function matchXPath(actual, expression) {
   if (typeof actual !== 'string') {
-    // Try to stringify non-string values
     try {
       actual = JSON.stringify(actual);
     } catch (e) {

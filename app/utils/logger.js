@@ -1,10 +1,46 @@
+/**
+ * Logger module for consistent logging across the application
+ * @module utils/logger
+ */
+
 import pino from 'pino';
-import pkg from '../../package.json' assert { type: 'json' };
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const packageJsonPath = path.join(__dirname, '../../package.json');
+const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
 let silentMode = false;
 
 /**
- * Sets the silent mode for logging
+ * Creates a logger instance
+ */
+const logger = pino({
+    level: process.env.LOG_LEVEL || 'info',
+    transport: {
+        target: 'pino-pretty',
+        options: {
+            colorize: true
+        }
+    }
+});
+
+/**
+ * Custom logger that respects silent mode
+ */
+const silentableLogger = {
+    info: (...args) => { if (!silentMode) logger.info(...args); },
+    error: (...args) => { if (!silentMode) logger.error(...args); },
+    warn: (...args) => { if (!silentMode) logger.warn(...args); },
+    debug: (...args) => { if (!silentMode) logger.debug(...args); },
+    trace: (...args) => { if (!silentMode) logger.trace(...args); },
+    fatal: (...args) => { if (!silentMode) logger.fatal(...args); },
+};
+
+/**
+ * Sets silent mode for logging
  * @param {boolean} silent - Whether to enable silent mode
  */
 export function setSilentMode(silent) {
@@ -12,26 +48,18 @@ export function setSilentMode(silent) {
 }
 
 /**
- * Checks if silent mode is enabled
- * @returns {boolean} True if silent mode is enabled
+ * Enables silent mode for testing
  */
-export function isSilentMode() {
-    return silentMode;
+export function enableSilentMode() {
+    silentMode = true;
 }
 
 /**
- * Pino logger instance with pretty printing
- * @type {import('pino').Logger}
+ * Disables silent mode
  */
-const logger = pino({
-    transport: {
-        target: 'pino-pretty',
-        options: {
-            colorize: true
-        }
-    },
-    level: 'info'
-});
+export function disableSilentMode() {
+    silentMode = false;
+}
 
 /**
  * Logs server startup information
@@ -44,49 +72,42 @@ export function logServerStarted(port, host = '0.0.0.0') {
 }
 
 /**
- * Logs incoming request details
- * @param {Object} request - The request object
- * @param {string} request.method - HTTP method
- * @param {string} request.path - Request path
- * @param {Object} request.query - Query parameters
- * @param {Object} request.headers - Request headers
- * @param {*} request.body - Request body
+ * Logs when a request is received
+ * @param {Object} request - Request object
  */
 export function logRequestReceived(request) {
     if (silentMode) return;
     logger.info({
-        type: 'received_request',
+        type: 'request_received',
         method: request.method,
-        path: request.path,
-        query: request.query,
-        headers: request.headers,
-        body: request.body
-    }, `Request received: ${request.method} ${request.path}`);
+        path: request.path
+    }, `${request.method} ${request.path}`);
 }
 
 /**
- * Logs outgoing response details
- * @param {import('express').Response} response - Express response object
+ * Logs when a response is sent
+ * @param {Object} response - The Express response object
  */
 export function logResponseSent(response) {
     if (silentMode) return;
     logger.info({
-        type: 'sent_response',
-        statusCode: response.statusCode,
-        headers: response.getHeaders()
-    }, `Response sent with status: ${response.statusCode}`);
+        type: 'response_sent',
+        status: response.statusCode
+    }, `Response sent with status ${response.statusCode}`);
 }
 
 /**
  * Logs when a new expectation is created
- * @param {Object} expectation - The created expectation object
+ * @param {Object} expectation - The new expectation
  */
 export function logExpectationCreated(expectation) {
     if (silentMode) return;
     logger.info({
         type: 'expectation_created',
-        expectation
-    }, `Expectation created with ID: ${expectation.id}`);
+        id: expectation.id,
+        method: expectation.httpRequest?.method,
+        path: expectation.httpRequest?.path
+    }, `Created expectation ${expectation.id}`);
 }
 
 /**
@@ -98,7 +119,7 @@ export function logExpectationRemoved(id) {
     logger.info({
         type: 'expectation_removed',
         id
-    }, `Expectation removed with ID: ${id}`);
+    }, `Removed expectation ${id}`);
 }
 
 /**
@@ -112,74 +133,7 @@ export function logExpectationsCleared() {
 }
 
 /**
- * Logs error messages
- * @param {string} message - Error message
- * @param {Error} error - Error object
- */
-export function logError(message, error) {
-    if (silentMode) return;
-    logger.error({
-        type: 'error',
-        error
-    }, `Error: ${message}`);
-}
-
-/**
- * Logs details of a forwarded request
- * @param {string} url - Target URL
- * @param {Object} options - Request options
- * @param {string} options.method - HTTP method
- * @param {Object} options.headers - Request headers
- * @param {*} options.body - Request body
- */
-export function logForwardedRequest(url, options) {
-    if (silentMode) return;
-    logger.info({
-        type: 'forwarded_request',
-        url,
-        method: options.method,
-        headers: options.headers,
-        body: options.body
-    }, `Forwarding request: ${options.method} ${url}`);
-}
-
-/**
- * Logs details of a forwarded response
- * @param {Object} response - The forwarded response
- * @param {number} response.status - HTTP status code
- * @param {Object} response.headers - Response headers
- * @param {*} response.body - Response body
- */
-export function logForwardedResponse(response) {
-    if (silentMode) return;
-    logger.info({
-        type: 'forwarded_response',
-        status: response.status,
-        headers: response.headers,
-        bodySize: typeof response.body === 'string' 
-            ? response.body.length 
-            : (response.body ? JSON.stringify(response.body).length : 0)
-    }, `Forwarded response received with status: ${response.status}`);
-}
-
-/**
- * Logs when no matching expectation is found for a request
- * @param {import('express').Request} req - Express request object
- */
-export function logNoMatchingExpectation(req) {
-    if (silentMode) return;
-    logger.warn({
-        type: 'no_matching_expectation',
-        method: req.method,
-        path: req.path,
-        query: req.query,
-        headers: req.headers,
-        body: req.body
-    }, 'No matching expectation found');
-}
-
-/**
- * Logs MockServer version information
+ * Logs version information at startup
  */
 export function logVersionInfo() {
     if (silentMode) return;
@@ -190,4 +144,4 @@ export function logVersionInfo() {
     }, `MockServer Node.js v${pkg.version} started`);
 }
 
-export default logger; 
+export default silentableLogger; 

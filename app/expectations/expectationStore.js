@@ -17,10 +17,8 @@ import {
   logExpectationsCleared
 } from '../utils/logger.js';
 
-// In-memory store for expectations
 let expectations = new Map();
 
-// Configuration flags
 let persistenceEnabled = true;
 let persistencePath = null;
 

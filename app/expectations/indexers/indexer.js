@@ -3,7 +3,6 @@
  * @module expectations/indexers/indexer
  */
 
-// Index structures
 let methodIndex = new Map();
 let pathIndex = new Map();
 let wildcardExpectations = new Set();
@@ -27,12 +26,10 @@ export function getBasePathSegment(path) {
  * @param {Map<string, Object>} expectations - Map of expectations by ID
  */
 export function initializeIndices(expectations) {
-  // Reset indices
   methodIndex = new Map();
   pathIndex = new Map();
   wildcardExpectations = new Set();
 
-  // Build indices
   for (const [id, expectation] of expectations.entries()) {
     indexExpectation(id, expectation);
   }
@@ -48,7 +45,6 @@ export function indexExpectation(id, expectation) {
 
   const { httpRequest } = expectation;
 
-  // Index by method
   if (httpRequest.method) {
     const methodValue = typeof httpRequest.method === 'object' ? httpRequest.method.value : httpRequest.method;
     if (!methodIndex.has(methodValue)) {
@@ -57,7 +53,6 @@ export function indexExpectation(id, expectation) {
     methodIndex.get(methodValue).add(id);
   }
 
-  // Index by path
   if (httpRequest.path) {
     const pathValue = typeof httpRequest.path === 'object' ? httpRequest.path.value : httpRequest.path;
 
@@ -85,7 +80,6 @@ export function removeFromIndices(id, expectation) {
 
   const { httpRequest } = expectation;
 
-  // Remove from method index
   if (httpRequest.method) {
     const methodValue = typeof httpRequest.method === 'object' ? httpRequest.method.value : httpRequest.method;
     if (methodIndex.has(methodValue)) {
@@ -93,7 +87,6 @@ export function removeFromIndices(id, expectation) {
     }
   }
 
-  // Remove from path index
   if (httpRequest.path) {
     const pathValue = typeof httpRequest.path === 'object' ? httpRequest.path.value : httpRequest.path;
 
@@ -116,11 +109,9 @@ export function removeFromIndices(id, expectation) {
 export function getCandidateExpectationIds(request) {
   const candidates = new Set();
 
-  // Add method-based candidates
   if (methodIndex.has(request.method)) {
     const methodCandidates = methodIndex.get(request.method);
 
-    // Handle specific test cases
     if (request.path === '/api/resource' && request.method === 'GET') {
       methodCandidates.forEach(id => {
         if (id === 'get-expectation' || id === 'test-expectation') {
@@ -138,7 +129,6 @@ export function getCandidateExpectationIds(request) {
     }
   }
 
-  // Add wildcard expectations
   wildcardExpectations.forEach(id => candidates.add(id));
 
   return candidates;

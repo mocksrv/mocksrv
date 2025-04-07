@@ -18,7 +18,6 @@ export function buildForwardUrl(request, forwardConfig) {
   const protocol = scheme.toLowerCase();
   const path = request.path || '/';
 
-  // Build query string
   let queryString = '';
   if (request.query && Object.keys(request.query).length > 0) {
     const params = new URLSearchParams();
@@ -44,26 +43,21 @@ export function buildForwardUrl(request, forwardConfig) {
 export async function forwardRequest(request, forwardConfig) {
   const url = buildForwardUrl(request, forwardConfig);
 
-  // Prepare options for fetch
   const options = {
     method: request.method,
     headers: {},
     redirect: 'follow'
   };
 
-  // Copy headers from the original request
   if (request.headers) {
     for (const [key, value] of Object.entries(request.headers)) {
-      // Skip headers that shouldn't be forwarded
       if (!['host', 'connection', 'content-length'].includes(key.toLowerCase())) {
         options.headers[key] = value;
       }
     }
   }
 
-  // Set body if present
   if (request.body) {
-    // For JSON content type, stringify the body
     if (request.headers &&
       request.headers['content-type'] &&
       request.headers['content-type'].includes('application/json')) {
@@ -78,13 +72,11 @@ export async function forwardRequest(request, forwardConfig) {
   try {
     const response = await fetch(url, options);
 
-    // Prepare headers
     const headers = {};
     response.headers.forEach((value, key) => {
       headers[key] = value;
     });
 
-    // Get response body
     let body;
     const contentType = response.headers.get('content-type');
 

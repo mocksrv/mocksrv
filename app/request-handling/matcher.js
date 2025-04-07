@@ -18,18 +18,15 @@ import { matchString } from '../expectations/matchers/stringMatcher.js';
  * @returns {Object|null} Matching expectation or null
  */
 export function findMatchingExpectation(request, expectations) {
-  // If no expectations, return null
   if (expectations.size === 0) {
     return null;
   }
 
-  // Get candidate expectation IDs using indices
   const candidateIds = getCandidateExpectationIds(request);
   if (candidateIds.size === 0) {
     return null;
   }
 
-  // Convert to array of expectations with priority info
   const matchingCandidates = Array.from(candidateIds)
     .map(id => {
       const expectation = expectations.get(id);
@@ -43,12 +40,10 @@ export function findMatchingExpectation(request, expectations) {
     })
     .filter(candidate => candidate && candidate.matches);
 
-  // If no matching candidates, return null
   if (matchingCandidates.length === 0) {
     return null;
   }
 
-  // Sort by priority (higher first) and ID (lexicographically)
   matchingCandidates.sort((a, b) => {
     if (b.priority !== a.priority) {
       return b.priority - a.priority;
@@ -56,7 +51,6 @@ export function findMatchingExpectation(request, expectations) {
     return b.expectation.id.localeCompare(a.expectation.id);
   });
 
-  // Return the highest priority match
   return matchingCandidates[0].expectation;
 }
 
@@ -74,7 +68,6 @@ export function matchesExpectation(request, expectation) {
   const { httpRequest } = expectation;
   const matchType = httpRequest.matchType || MatchType.STRICT;
 
-  // Match method
   if (httpRequest.method) {
     const invertMethodMatch = httpRequest.method.not === true;
     const methodValue = typeof httpRequest.method === 'object' ? httpRequest.method.value : httpRequest.method;
@@ -85,7 +78,6 @@ export function matchesExpectation(request, expectation) {
     }
   }
 
-  // Match path
   if (httpRequest.path) {
     const invertPathMatch = httpRequest.path.not === true;
     const pathValue = typeof httpRequest.path === 'object' ? httpRequest.path.value : httpRequest.path;
@@ -105,7 +97,6 @@ export function matchesExpectation(request, expectation) {
     }
   }
 
-  // Match query parameters
   const queryParams = httpRequest.queryStringParameters || httpRequest.query;
   if (queryParams) {
     if (!matchesQuery(request.query, queryParams, matchType)) {
@@ -117,7 +108,6 @@ export function matchesExpectation(request, expectation) {
     return false;
   }
 
-  // Match headers
   if (httpRequest.headers) {
     if (!matchesHeaders(request.headers, httpRequest.headers, matchType)) {
       return false;
@@ -128,7 +118,6 @@ export function matchesExpectation(request, expectation) {
     return false;
   }
 
-  // Match body
   if (httpRequest.body) {
     if (!matchesBody(request.body, httpRequest.body, matchType)) {
       return false;
@@ -170,11 +159,9 @@ function containsOnlyStandardHeaders(headers) {
 export function matchesQuery(requestQuery, expectedQuery, matchType) {
   const invertMatch = expectedQuery.not === true;
 
-  // Make a copy without the "not" flag
   const expectedQueryToMatch = { ...expectedQuery };
   delete expectedQueryToMatch.not;
 
-  // In strict mode, check all parameters
   if (matchType === MatchType.STRICT) {
     const expectedKeys = Object.keys(expectedQueryToMatch);
     const requestKeys = Object.keys(requestQuery);
@@ -184,7 +171,6 @@ export function matchesQuery(requestQuery, expectedQuery, matchType) {
     }
   }
 
-  // Check if all expected parameters exist with correct values
   const result = Object.entries(expectedQueryToMatch).every(([key, value]) => {
     if (Array.isArray(value) && Array.isArray(requestQuery[key])) {
       return value.length === requestQuery[key].length &&
@@ -206,11 +192,9 @@ export function matchesQuery(requestQuery, expectedQuery, matchType) {
 export function matchesHeaders(requestHeaders, expectedHeaders, matchType) {
   const invertMatch = expectedHeaders.not === true;
 
-  // Make a copy without the "not" flag
   const expectedHeadersToMatch = { ...expectedHeaders };
   delete expectedHeadersToMatch.not;
 
-  // In strict mode, check all non-standard headers
   if (matchType === MatchType.STRICT) {
     const standardHeaders = ['host', 'connection', 'content-length', 'user-agent', 'accept', 'accept-encoding', 'content-type'];
 
@@ -225,7 +209,6 @@ export function matchesHeaders(requestHeaders, expectedHeaders, matchType) {
     }
   }
 
-  // Check all expected headers exist with correct values (case-insensitive)
   const result = Object.entries(expectedHeadersToMatch).every(([key, value]) => {
     const headerKey = key.toLowerCase();
     return requestHeaders[headerKey] === value;
@@ -260,7 +243,6 @@ export function matchesBody(requestBody, expectedBody, matchType) {
     return false;
   }
 
-  // In strict mode for JSON, check if all fields match exactly
   if (matchType === MatchType.STRICT &&
     type === BodyMatcherType.JSON &&
     typeof requestBody === 'object' &&
@@ -274,7 +256,6 @@ export function matchesBody(requestBody, expectedBody, matchType) {
     }
   }
 
-  // In ONLY_MATCHING_FIELDS mode for JSON, check if fields in expected exist in request
   if (matchType === MatchType.ONLY_MATCHING_FIELDS &&
     type === BodyMatcherType.JSON &&
     typeof requestBody === 'object' &&
@@ -288,7 +269,6 @@ export function matchesBody(requestBody, expectedBody, matchType) {
     return invertMatch ? !result : result;
   }
 
-  // Match based on type
   let result = false;
 
   try {

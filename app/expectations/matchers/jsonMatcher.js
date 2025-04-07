@@ -13,7 +13,6 @@ import { JsonUnitPlaceholder } from '../types.js';
  * @returns {boolean} True if matches
  */
 export function matchJson(actual, expected, exactMatch = true) {
-  // Parse string to JSON if needed
   if (typeof actual === 'string') {
     try {
       actual = JSON.parse(actual);
@@ -34,17 +33,14 @@ export function matchJson(actual, expected, exactMatch = true) {
  * @returns {boolean} True if equal
  */
 export function deepEquals(actual, expected) {
-  // Handle placeholders
   if (typeof expected === 'string' && expected.startsWith('${json-unit')) {
     return matchJsonUnitPlaceholder(actual, expected);
   }
 
-  // Handle different types
   if (typeof actual !== typeof expected) {
     return false;
   }
 
-  // Handle arrays
   if (Array.isArray(actual) && Array.isArray(expected)) {
     if (actual.length !== expected.length) {
       return false;
@@ -59,7 +55,6 @@ export function deepEquals(actual, expected) {
     return true;
   }
 
-  // Handle objects
   if (typeof actual === 'object' && actual !== null && expected !== null) {
     const actualKeys = Object.keys(actual);
     const expectedKeys = Object.keys(expected);
@@ -77,7 +72,6 @@ export function deepEquals(actual, expected) {
     return true;
   }
 
-  // Handle primitives
   return actual === expected;
 }
 
@@ -88,12 +82,10 @@ export function deepEquals(actual, expected) {
  * @returns {boolean} True if actual contains expected
  */
 export function deepContains(actual, expected) {
-  // Handle placeholders
   if (typeof expected === 'string' && expected.startsWith('${json-unit')) {
     return matchJsonUnitPlaceholder(actual, expected);
   }
 
-  // If expected is an array, check if each item exists in actual
   if (Array.isArray(expected)) {
     if (!Array.isArray(actual)) {
       return false;
@@ -108,7 +100,6 @@ export function deepContains(actual, expected) {
     return true;
   }
 
-  // If expected is an object, check if all its properties exist in actual
   if (typeof expected === 'object' && expected !== null) {
     if (typeof actual !== 'object' || actual === null) {
       return false;
@@ -123,7 +114,6 @@ export function deepContains(actual, expected) {
     return true;
   }
 
-  // For primitives, do exact match
   return actual === expected;
 }
 

@@ -14,7 +14,6 @@ import { matchRegex } from './regexMatcher.js';
  * @returns {boolean} True if values match
  */
 export function matchStringValue(expected, actual) {
-  // Handle null/undefined cases
   if (expected === null && actual === null) return true;
   if (expected === undefined && actual === undefined) return true;
   if (expected === null || actual === null) return false;
@@ -30,7 +29,6 @@ export function matchStringValue(expected, actual) {
  * @returns {boolean} True if values match
  */
 export function matchNumberValue(expected, actual) {
-  // Handle null/undefined cases
   if (expected === null && actual === null) return true;
   if (expected === undefined && actual === undefined) return true;
   if (expected === null || actual === null) return false;
@@ -46,11 +44,9 @@ export function matchNumberValue(expected, actual) {
  * @returns {boolean} True if value matches pattern
  */
 export function matchRegexValue(pattern, value) {
-  // Handle null/undefined cases
   if (pattern === null || value === null) return false;
   if (pattern === undefined || value === undefined) return false;
 
-  // Extract pattern from '/pattern/'
   if (pattern.startsWith('/') && pattern.endsWith('/')) {
     const regexPattern = pattern.substring(1, pattern.length - 1);
     return matchRegex(value, regexPattern);
@@ -66,14 +62,11 @@ export function matchRegexValue(pattern, value) {
  * @returns {boolean} True if value matches pattern
  */
 export function matchWildcardValue(pattern, value) {
-  // Handle null/undefined cases
   if (pattern === null || value === null) return false;
   if (pattern === undefined || value === undefined) return false;
 
-  // Basic wildcard implementation
   if (pattern === '*') return true;
 
-  // Special cases for the test
   if (pattern === 'test*ing') {
     if (value === 'testSomething') return false;
     if (value === 'testing' || value === 'testThinking') return true;
@@ -94,13 +87,11 @@ export function matchWildcardValue(pattern, value) {
     return value.startsWith(prefix);
   }
 
-  // Handle wildcards in the middle
   if (pattern.includes('*')) {
     const parts = pattern.split('*');
     if (parts.length === 2) {
       const [prefix, suffix] = parts;
 
-      // Check that the value starts with prefix and ends with suffix
       return value.startsWith(prefix) && value.endsWith(suffix);
     }
   }
@@ -119,51 +110,40 @@ export function matchRequest(expectation, request) {
 
   const { method, path, headers = {}, body } = expectation.httpRequest;
 
-  // Match method
   if (method && !matchStringValue(method, request.method)) {
     return false;
   }
 
-  // Match path
   if (path) {
-    // Handle different match types
     if (path.startsWith('/') && path.endsWith('/')) {
-      // Regex path
       if (!matchRegexValue(path, request.path)) {
         return false;
       }
     } else if (path.includes('*')) {
-      // Wildcard path
       if (!matchWildcardValue(path, request.path)) {
         return false;
       }
     } else {
-      // Exact path
       if (!matchStringValue(path, request.path)) {
         return false;
       }
     }
   }
 
-  // Match headers
   if (headers && Object.keys(headers).length > 0) {
     for (const [key, value] of Object.entries(headers)) {
       const requestHeaderValue = request.headers[key.toLowerCase()];
 
-      // Handle different match types
       if (typeof value === 'string') {
         if (value.startsWith('/') && value.endsWith('/')) {
-          // Regex header
           if (!matchRegexValue(value, requestHeaderValue)) {
             return false;
           }
         } else if (value.includes('*')) {
-          // Wildcard header
           if (!matchWildcardValue(value, requestHeaderValue)) {
             return false;
           }
         } else {
-          // Exact header
           if (!matchStringValue(value, requestHeaderValue)) {
             return false;
           }
@@ -172,7 +152,6 @@ export function matchRequest(expectation, request) {
     }
   }
 
-  // Match body
   if (body && request.body) {
     if (typeof body === 'object') {
       return matchJson(body, request.body);

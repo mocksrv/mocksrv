@@ -11,7 +11,6 @@
  */
 export function matchRegex(actual, pattern) {
   if (typeof actual !== 'string') {
-    // Try to stringify non-string values
     try {
       actual = JSON.stringify(actual);
     } catch (e) {
