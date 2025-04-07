@@ -41,8 +41,6 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.2",
-    "pino-pretty": "^13.0.0",
-    "sinon": "^17.2.0",
-    "nock": "^13.5.1"
+    "pino-pretty": "^13.0.0"
   }
 }
