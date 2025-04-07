@@ -244,18 +244,18 @@ While MockSrv is inspired by MockServer, it offers a different approach and impl
 
 ### Feature Comparison and Roadmap
 
-| Feature | MockServer | MockSrv (current) | Status |
+| Feature | MockServer Java | MockServer Node (current) | Status |
 |---------|----------------|---------------------------|--------|
 | Basic request matching | ✅ | ✅ | Implemented |
 | Method and path matching | ✅ | ✅ | Implemented |
 | Header matching | ✅ | ✅ | Implemented |
 | Query params matching | ✅ | ✅ | Implemented |
 | JSON body matching | ✅ | ✅ | Implemented |
-| JsonPath matching | ✅ | ❌ | Planned |
+| JsonPath matching | ✅ | ✅ | Implemented |
 | JSON Schema validation | ✅ | ❌ | Planned |
-| XPath matching for XML | ✅ | ❌ | Not planned |
-| RegEx matching for all fields | ✅ | ⚠️ (partial) | Planned |
-| Conditional matching | ✅ | ❌ | Planned |
+| XPath matching for XML | ✅ | ✅ | Implemented |
+| RegEx matching for all fields | ✅ | ✅ | Implemented |
+| Conditional matching | ✅ | ⚠️ (partial) | Planned |
 | OpenAPI/Swagger support | ✅ | ❌ | Not planned |
 | Dynamic responses (callback classes) | ✅ | ❌ | Planned |
 | Response templates | ✅ | ❌ | Planned |
@@ -264,7 +264,7 @@ While MockSrv is inspired by MockServer, it offers a different approach and impl
 | Request modification before forwarding | ✅ | ❌ | Planned |
 | Request verification | ✅ | ❌ | Planned |
 | Request history | ✅ | ❌ | Planned |
-| Advanced logging | ✅ | ⚠️ (basic) | Planned |
+| Advanced logging | ✅ | ✅ | Implemented |
 | Node.js client library | ❌ | ❌ | Not planned |
 | Testing framework integration | ✅ (Java) | ❌ | Not planned |
 | Admin UI | ✅ | ❌ | Not planned |
