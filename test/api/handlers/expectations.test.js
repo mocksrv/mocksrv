@@ -100,7 +100,9 @@ test('createExpectationHandler powinien utworzyć nowe oczekiwanie', async () =>
 
   // Weryfikacja wyników
   assert.strictEqual(res.statusCode, 201, 'Status code should be 201 Created');
-  assert.ok(res.body.id, 'Response should contain an ID');
+  assert.ok(Array.isArray(res.body), 'Response should be an array');
+  assert.strictEqual(res.body.length, 1, 'Response should contain one expectation');
+  assert.ok(res.body[0].id, 'Response should contain an expectation with ID');
 
   // Sprawdź, czy oczekiwanie zostało zapisane w store
   const allExpectations = await getAllExpectations();
@@ -246,7 +248,7 @@ test('deleteExpectationHandler powinien usunąć konkretne oczekiwanie', async (
   await clearExpectations();
 });
 
-test('deleteExpectationHandler powinien zwrócić 404 gdy oczekiwanie nie istnieje', async () => {
+test('deleteExpectationHandler powinien zwrócić 400 gdy oczekiwanie nie istnieje', async () => {
   // Przygotowanie testu
   await clearExpectations();
 
@@ -257,8 +259,9 @@ test('deleteExpectationHandler powinien zwrócić 404 gdy oczekiwanie nie istnie
   await deleteExpectationHandler(req, res);
 
   // Weryfikacja wyników
-  assert.strictEqual(res.statusCode, 404, 'Status code should be 404 Not Found');
+  assert.strictEqual(res.statusCode, 400, 'Status code should be 400 Bad Request');
   assert.ok(res.body.error, 'Response should contain an error message');
+  assert.strictEqual(res.body.error, 'incorrect request format', 'Error should indicate incorrect request format');
 
   // Sprzątanie po teście
   await clearExpectations();
@@ -290,7 +293,8 @@ test('clearExpectationsHandler powinien usunąć wszystkie oczekiwania', async (
   await clearExpectationsHandler(req, res);
 
   // Weryfikacja wyników
-  assert.strictEqual(res.statusCode, 204, 'Status code should be 204 No Content');
+  assert.strictEqual(res.statusCode, 200, 'Status code should be 200 OK');
+  assert.deepStrictEqual(res.body, { message: 'expectations and recorded requests cleared' }, 'Should return success message');
 
   // Sprawdź czy wszystkie oczekiwania zostały usunięte
   const afterExpectations = await getAllExpectations();

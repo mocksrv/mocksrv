@@ -7,7 +7,8 @@ import fs from 'fs';
 import path from 'path';
 import logger from '../utils/logger.js';
 
-const DEFAULT_PATH = './data/expectations.json';
+// Pobierz ścieżkę z zmiennych środowiskowych lub użyj domyślnej
+const DEFAULT_PATH = process.env.MOCKSRV_EXPECTATIONS_PATH || './data/expectations.json';
 
 /**
  * Loads expectations from the persistence file
@@ -24,7 +25,10 @@ export async function loadExpectations(filepath) {
     }
 
     if (!fs.existsSync(filePath)) {
-      logger.debug(`No existing expectations file found at ${filePath}, starting with empty store`);
+      logger.debug('Starting with empty store', {
+        event: 'PERSISTENCE_EMPTY',
+        path: filePath
+      });
       return new Map();
     }
 
@@ -36,10 +40,20 @@ export async function loadExpectations(filepath) {
       expectationsMap.set(expectation.id, expectation);
     });
 
-    logger.debug(`Loaded ${expectationsMap.size} expectations from ${filePath}`);
+    logger.debug('Expectations loaded from file', {
+      event: 'PERSISTENCE_LOADED',
+      path: filePath,
+      count: expectationsMap.size
+    });
+    
     return expectationsMap;
   } catch (error) {
-    logger.error(`Error loading expectations from ${filePath}:`, error);
+    logger.error('Failed to load expectations', {
+      event: 'PERSISTENCE_LOAD_ERROR',
+      path: filePath,
+      error: error.message,
+      stack: error.stack
+    });
     return new Map();
   }
 }
@@ -67,8 +81,17 @@ export async function saveExpectations(expectations, filepath) {
       'utf8'
     );
 
-    logger.debug(`Saved ${jsonArray.length} expectations to ${filePath}`);
+    logger.debug('Expectations saved to file', {
+      event: 'PERSISTENCE_SAVED',
+      path: filePath,
+      count: jsonArray.length
+    });
   } catch (error) {
-    logger.error(`Error saving expectations to ${filePath}:`, error);
+    logger.error('Failed to save expectations', {
+      event: 'PERSISTENCE_SAVE_ERROR',
+      path: filePath,
+      error: error.message,
+      stack: error.stack
+    });
   }
 } 

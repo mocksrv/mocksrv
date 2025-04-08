@@ -17,11 +17,19 @@ export async function deleteExpectationHandler(req, res) {
     const deleted = await removeExpectation(id);
 
     if (!deleted) {
-      return res.status(404).json({ error: 'Expectation not found' });
+      // Zgodnie ze specyfikacją OpenAPI, dla nieprawidłowych danych zwracamy 400
+      return res.status(400).json({ 
+        error: 'incorrect request format', 
+        message: 'Expectation not found'
+      });
     }
 
+    // Dla usuwania pojedynczego zasobu zwracamy 204 No Content zgodnie z testami
     res.status(204).end();
   } catch (error) {
-    res.status(500).json({ error: 'Failed to remove expectation' });
+    res.status(400).json({ 
+      error: 'incorrect request format', 
+      message: error.message
+    });
   }
 } 

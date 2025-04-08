@@ -1,5 +1,5 @@
 /**
- * Logger module for consistent logging across the application
+ * Enhanced logger module based on MockServer implementation
  * @module utils/logger
  */
 
@@ -12,136 +12,147 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageJsonPath = path.join(__dirname, '../../package.json');
 const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
-let silentMode = false;
+// Logger configuration
+const DEFAULT_LOG_LEVEL = 'info';
+const LOG_LEVELS = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
 
-/**
- * Creates a logger instance
- */
-const logger = pino({
-    level: process.env.LOG_LEVEL || 'info',
+// Create base logger instance
+const createLogger = (level = DEFAULT_LOG_LEVEL) => pino({
+    level,
     transport: {
         target: 'pino-pretty',
         options: {
-            colorize: true
+            colorize: true,
+            translateTime: 'HH:MM:ss.l',
+            ignore: 'pid,hostname',
+            messageFormat: '{msg}',
         }
+    },
+    formatters: {
+        level: (label) => ({ level: label.toUpperCase() })
     }
 });
 
-/**
- * Custom logger that respects silent mode
- */
-const silentableLogger = {
-    info: (...args) => { if (!silentMode) logger.info(...args); },
-    error: (...args) => { if (!silentMode) logger.error(...args); },
-    warn: (...args) => { if (!silentMode) logger.warn(...args); },
-    debug: (...args) => { if (!silentMode) logger.debug(...args); },
-    trace: (...args) => { if (!silentMode) logger.trace(...args); },
-    fatal: (...args) => { if (!silentMode) logger.fatal(...args); },
+// Initialize logger with environment settings
+const baseLogger = createLogger(process.env.MOCKSERVER_LOG_LEVEL || DEFAULT_LOG_LEVEL);
+
+// Core logging functions
+const log = (level) => (message, context = {}) => {
+    if (!baseLogger[level]) return;
+    baseLogger[level]({ msg: message, ...context });
 };
 
-/**
- * Sets silent mode for logging
- * @param {boolean} silent - Whether to enable silent mode
- */
-export function setSilentMode(silent) {
-    silentMode = !!silent;
-}
+export const trace = log('trace');
+export const debug = log('debug');
+export const info = log('info');
+export const warn = log('warn');
+export const error = log('error');
+export const fatal = log('fatal');
 
-/**
- * Enables silent mode for testing
- */
-export function enableSilentMode() {
-    silentMode = true;
-}
+// MockServer specific logging functions
+export const logServerStarted = (port, host = '0.0.0.0') => {
+    info('MockServer started', {
+        event: 'SERVER_STARTED',
+        port,
+        host,
+        version: pkg.version
+    });
+};
 
-/**
- * Disables silent mode
- */
-export function disableSilentMode() {
-    silentMode = false;
-}
-
-/**
- * Logs server startup information
- * @param {number} port - The port number the server is running on
- * @param {string} [host] - Host address
- */
-export function logServerStarted(port, host = '0.0.0.0') {
-    if (silentMode) return;
-    logger.info(`MockServer started on ${host}:${port}`);
-}
-
-/**
- * Logs when a request is received
- * @param {Object} request - Request object
- */
-export function logRequestReceived(request) {
-    if (silentMode) return;
-    logger.info({
-        type: 'request_received',
+export const logRequest = (request, type = 'RECEIVED') => {
+    debug(`${request.method} ${request.path}`, {
+        event: `REQUEST_${type}`,
         method: request.method,
-        path: request.path
-    }, `${request.method} ${request.path}`);
-}
+        path: request.path,
+        headers: request.headers,
+        query: request.query,
+        body: request.body
+    });
+};
 
-/**
- * Logs when a response is sent
- * @param {Object} response - The Express response object
- */
-export function logResponseSent(response) {
-    if (silentMode) return;
-    logger.info({
-        type: 'response_sent',
-        status: response.statusCode
-    }, `Response sent with status ${response.statusCode}`);
-}
+export const logResponse = (response, request) => {
+    debug(`Response sent with status ${response.statusCode}`, {
+        event: 'RESPONSE_SENT',
+        status: response.statusCode,
+        method: request?.method,
+        path: request?.path,
+        responseTime: response.getHeader('X-Response-Time')
+    });
+};
 
-/**
- * Logs when a new expectation is created
- * @param {Object} expectation - The new expectation
- */
-export function logExpectationCreated(expectation) {
-    if (silentMode) return;
-    logger.info({
-        type: 'expectation_created',
+export const logExpectation = (expectation, action = 'CREATED') => {
+    info(`Expectation ${action.toLowerCase()}: ${expectation.id}`, {
+        event: `EXPECTATION_${action}`,
         id: expectation.id,
         method: expectation.httpRequest?.method,
-        path: expectation.httpRequest?.path
-    }, `Created expectation ${expectation.id}`);
-}
+        path: expectation.httpRequest?.path,
+        priority: expectation.priority
+    });
+};
 
-/**
- * Logs when an expectation is removed
- * @param {string} id - The ID of the removed expectation
- */
-export function logExpectationRemoved(id) {
-    if (silentMode) return;
-    logger.info({
-        type: 'expectation_removed',
-        id
-    }, `Removed expectation ${id}`);
-}
+export const logMatch = (request, expectation, matched = true) => {
+    const message = matched ? 'Request matched expectation' : 'Request did not match expectation';
+    debug(message, {
+        event: matched ? 'REQUEST_MATCHED' : 'REQUEST_NOT_MATCHED',
+        requestMethod: request.method,
+        requestPath: request.path,
+        expectationId: expectation?.id,
+        matchDetails: {
+            method: matched,
+            path: matched,
+            headers: matched,
+            query: matched,
+            body: matched
+        }
+    });
+};
 
-/**
- * Logs when all expectations are cleared
- */
-export function logExpectationsCleared() {
-    if (silentMode) return;
-    logger.info({
-        type: 'expectations_cleared'
-    }, 'All expectations cleared');
-}
+export const logError = (error, additionalContext = {}) => {
+    error(error.message || 'An error occurred', {
+        event: 'ERROR',
+        stack: error.stack,
+        ...additionalContext
+    });
+};
 
-/**
- * Logs version information at startup
- */
-export function logVersionInfo() {
-    if (silentMode) return;
-    logger.info({
-        type: 'version_info',
-        name: 'mockserver-node',
-        version: pkg.version
-    }, `MockServer Node.js v${pkg.version} started`);
-}
+// Configuration functions
+export const setLogLevel = (level) => {
+    if (LOG_LEVELS.includes(level.toLowerCase())) {
+        baseLogger.level = level.toLowerCase();
+    } else {
+        warn(`Invalid log level: ${level}. Using default: ${DEFAULT_LOG_LEVEL}`);
+    }
+};
 
-export default silentableLogger; 
+// Utility functions for testing
+export const createTestLogger = () => {
+    const logs = [];
+    const testLogger = {
+        trace: (msg, ctx) => logs.push({ level: 'TRACE', msg, ctx }),
+        debug: (msg, ctx) => logs.push({ level: 'DEBUG', msg, ctx }),
+        info: (msg, ctx) => logs.push({ level: 'INFO', msg, ctx }),
+        warn: (msg, ctx) => logs.push({ level: 'WARN', msg, ctx }),
+        error: (msg, ctx) => logs.push({ level: 'ERROR', msg, ctx }),
+        fatal: (msg, ctx) => logs.push({ level: 'FATAL', msg, ctx }),
+        getLogs: () => [...logs],
+        clearLogs: () => { logs.length = 0; }
+    };
+    return testLogger;
+};
+
+// Export default logger for backward compatibility
+export default {
+    trace,
+    debug,
+    info,
+    warn,
+    error,
+    fatal,
+    logServerStarted,
+    logRequest,
+    logResponse,
+    logExpectation,
+    logMatch,
+    logError,
+    setLogLevel
+}; 

@@ -4,8 +4,9 @@
  */
 
 import { findExpectationForRequest } from '../expectations/expectationStore.js';
-import { logRequestReceived, logResponseSent } from '../utils/logger.js';
+import logger, { logRequest, logResponse, logMatch, logError } from '../utils/logger.js';
 import { forwardRequest } from '../http-forwarding/forwarder.js';
+import { recordRequest, recordRequestResponse } from '../api/handlers/retrieveHandler.js';
 
 /**
  * Creates a promise that resolves after the specified delay
@@ -67,22 +68,83 @@ export function requestHandler(req, res, next) {
     body: req.body
   };
 
-  logRequestReceived(request);
+  // Rejestrujemy request w historii
+  recordRequest(request);
 
-  const matchingExpectation = findExpectationForRequest(request);
+  // Logowanie requestu
+  logRequest(request);
+  
+  try {
+    const matchingExpectation = findExpectationForRequest(request);
 
-  if (!matchingExpectation) {
-    return next();
-  }
+    if (!matchingExpectation) {
+      logMatch(request, null, false);
+      return next();
+    }
 
-  handleResponse(request, res, matchingExpectation).catch(error => {
-    console.error('Error handling response:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error.message
+    logMatch(request, matchingExpectation, true);
+    
+    handleResponse(request, res, matchingExpectation).catch(error => {
+      logError(error, {
+        context: 'response_handling',
+        request: {
+          method: request.method,
+          path: request.path
+        },
+        expectation: {
+          id: matchingExpectation.id
+        }
+      });
+      
+      const errorResponse = {
+        error: 'Internal Server Error',
+        message: error.message,
+        requestReceived: {
+          method: request.method,
+          path: request.path,
+          query: request.query
+        }
+      };
+      
+      res.status(500).json(errorResponse);
+      
+      // Rejestrujemy request i response w historii
+      recordRequestResponse(request, {
+        statusCode: 500,
+        body: errorResponse
+      });
+      
+      logResponse(res, request);
     });
-    logResponseSent(res);
-  });
+  } catch (error) {
+    logError(error, {
+      context: 'request_processing',
+      request: {
+        method: request.method,
+        path: request.path
+      }
+    });
+    
+    const errorResponse = {
+      error: 'Request Processing Error',
+      message: error.message,
+      requestReceived: {
+        method: request.method,
+        path: request.path,
+        query: request.query
+      }
+    };
+    
+    res.status(500).json(errorResponse);
+    
+    // Rejestrujemy request i response w historii
+    recordRequestResponse(request, {
+      statusCode: 500,
+      body: errorResponse
+    });
+    
+    logResponse(res, request);
+  }
 }
 
 /**
@@ -96,25 +158,35 @@ async function handleResponse(request, res, expectation) {
   const { httpResponse, httpForward } = expectation;
 
   if (httpResponse) {
-    await sendMockResponse(res, httpResponse);
+    await sendMockResponse(request, res, httpResponse);
   } else if (httpForward) {
     await sendForwardedResponse(request, res, httpForward);
   } else {
-    res.status(500).json({
+    const errorResponse = {
       error: 'Invalid expectation configuration',
       message: 'Expectation must have either httpResponse or httpForward'
+    };
+    
+    res.status(500).json(errorResponse);
+    
+    // Rejestrujemy request i response w historii
+    recordRequestResponse(request, {
+      statusCode: 500,
+      body: errorResponse
     });
-    logResponseSent(res);
+    
+    logResponse(res, request);
   }
 }
 
 /**
  * Sends a mock response based on the expectation
+ * @param {Object} request - Request object
  * @param {import('express').Response} res - Express response
  * @param {Object} httpResponse - Response configuration
  * @returns {Promise<void>}
  */
-async function sendMockResponse(res, httpResponse) {
+async function sendMockResponse(request, res, httpResponse) {
   const delayMs = calculateDelay(httpResponse.delay);
   if (delayMs > 0) {
     await delay(delayMs);
@@ -129,13 +201,23 @@ async function sendMockResponse(res, httpResponse) {
     });
   }
 
+  // Przygotuj odpowiedź do rejestracji
+  const responseToRecord = {
+    statusCode: status,
+    headers: res.getHeaders ? res.getHeaders() : {},
+    body: httpResponse.body
+  };
+
   if (httpResponse.body) {
     res.send(httpResponse.body);
   } else {
     res.end();
   }
 
-  logResponseSent(res);
+  // Rejestrujemy request i response w historii
+  recordRequestResponse(request, responseToRecord);
+  
+  logResponse(res, request);
 }
 
 /**
@@ -162,18 +244,37 @@ async function sendForwardedResponse(request, res, httpForward) {
 
     res.status(forwardedResponse.status);
 
+    // Przygotuj odpowiedź do rejestracji
+    const responseToRecord = {
+      statusCode: forwardedResponse.status,
+      headers: forwardedResponse.headers || {},
+      body: forwardedResponse.body
+    };
+
     if (forwardedResponse.body) {
       res.send(forwardedResponse.body);
     } else {
       res.end();
     }
 
-    logResponseSent(res);
+    // Rejestrujemy request i response w historii
+    recordRequestResponse(request, responseToRecord);
+    
+    logResponse(res, request);
   } catch (error) {
-    res.status(502).json({
+    const errorResponse = {
       error: 'Bad Gateway',
       message: `Failed to forward request: ${error.message}`
+    };
+    
+    res.status(502).json(errorResponse);
+    
+    // Rejestrujemy request i response w historii
+    recordRequestResponse(request, {
+      statusCode: 502,
+      body: errorResponse
     });
-    logResponseSent(res);
+    
+    logResponse(res, request);
   }
 } 

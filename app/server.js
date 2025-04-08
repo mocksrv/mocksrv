@@ -4,24 +4,21 @@
  */
 
 import express from 'express';
-import { initializeStore } from './expectations/expectationStore.js';
+import { initializeStore, setPersistencePath, disablePersistence, addExpectation, clearExpectations } from './expectations/expectationStore.js';
 import { requestHandler } from './request-handling/requestHandler.js';
 import apiRoutes from './api/routes.js';
-import { logVersionInfo, logServerStarted } from './utils/logger.js';
+import logger, { logServerStarted, logRequest, logResponse, logError } from './utils/logger.js';
 import fs from 'fs';
 import path from 'path';
 
 const CONFIG = {
-    HOST: process.env.MOCKSERVER_HOST || '0.0.0.0',
-    PORT: process.env.NODE_PORT || process.env.PORT || 1080,
-
+    HOST: process.env.MOCKSERVER_HOST || 'localhost',
+    PORT: parseInt(process.env.NODE_PORT || process.env.PORT || '1080', 10),
+    VERSION: process.env.npm_package_version || '1.0.0',
     LOG_LEVEL: process.env.MOCKSERVER_LOG_LEVEL || 'info',
-
     MAX_HEADER_SIZE: parseInt(process.env.MOCKSERVER_MAX_HEADER_SIZE || '8192', 10),
-
     INITIALIZATION_JSON_PATH: process.env.MOCKSERVER_INITIALIZATION_JSON_PATH || '',
     WATCH_INITIALIZATION_JSON: process.env.MOCKSERVER_WATCH_INITIALIZATION_JSON === 'true',
-
     PERSIST_EXPECTATIONS: process.env.MOCKSERVER_PERSIST_EXPECTATIONS !== 'false',
     PERSISTED_EXPECTATIONS_PATH: process.env.MOCKSERVER_PERSISTED_EXPECTATIONS_PATH || './data/expectations.json'
 };
@@ -40,6 +37,45 @@ if (CONFIG.MAX_HEADER_SIZE) {
     app.use(express.text({ type: 'text/plain' }));
 }
 
+// Wildcard middleware do logowania wszystkich żądań
+app.use((req, res, next) => {
+    const request = {
+        method: req.method,
+        path: req.path,
+        query: req.query,
+        headers: req.headers,
+        body: req.body
+    };
+    
+    // Logowanie wszystkich żądań
+    logRequest(request);
+    
+    // Przechwytywanie odpowiedzi
+    const originalSend = res.send;
+    const originalEnd = res.end;
+    const originalJson = res.json;
+    
+    // Przechwytywanie metody send
+    res.send = function(body) {
+        logResponse(res, request);
+        return originalSend.apply(res, arguments);
+    };
+    
+    // Przechwytywanie metody json
+    res.json = function(body) {
+        logResponse(res, request);
+        return originalJson.apply(res, arguments);
+    };
+    
+    // Przechwytywanie metody end
+    res.end = function(chunk) {
+        logResponse(res, request);
+        return originalEnd.apply(res, arguments);
+    };
+    
+    next();
+});
+
 app.use(requestHandler);
 
 app.use(apiRoutes);
@@ -53,7 +89,7 @@ async function loadInitializationExpectations() {
 
     try {
         if (!fs.existsSync(CONFIG.INITIALIZATION_JSON_PATH)) {
-            console.warn(`Initialization file not found: ${CONFIG.INITIALIZATION_JSON_PATH}`);
+            logger.warn(`Initialization file not found: ${CONFIG.INITIALIZATION_JSON_PATH}`);
             return;
         }
 
@@ -61,15 +97,38 @@ async function loadInitializationExpectations() {
         const expectations = JSON.parse(fileContent);
 
         if (Array.isArray(expectations)) {
-            console.log(`Loading ${expectations.length} expectations from initialization file`);
+            logger.info(`Loading expectations from file`, {
+                file: CONFIG.INITIALIZATION_JSON_PATH,
+                count: expectations.length
+            });
+            
             for (const expectation of expectations) {
-                await initializeStore.addExpectation(expectation);
+                try {
+                    const requestDetails = expectation.httpRequest || {};
+                    logger.debug('Loading expectation', {
+                        method: requestDetails.method || 'ANY',
+                        path: requestDetails.path || '/',
+                        id: expectation.id,
+                        priority: expectation.priority
+                    });
+                    
+                    await addExpectation(expectation);
+                } catch (expectationError) {
+                    logError(expectationError, {
+                        context: 'initialization',
+                        expectation: {
+                            id: expectation.id,
+                            method: expectation.httpRequest?.method,
+                            path: expectation.httpRequest?.path
+                        }
+                    });
+                }
             }
         } else {
-            console.warn('Initialization file does not contain an array of expectations');
+            logger.warn('Initialization file does not contain an array of expectations');
         }
     } catch (error) {
-        console.error('Failed to load initialization expectations:', error);
+        logError(error, { context: 'initialization_load' });
     }
 }
 
@@ -82,14 +141,18 @@ function setupInitializationFileWatcher() {
     try {
         fs.watch(CONFIG.INITIALIZATION_JSON_PATH, async (eventType) => {
             if (eventType === 'change') {
-                console.log('Initialization file changed, reloading expectations');
-                await initializeStore.clearExpectations();
+                logger.info('Initialization file changed, reloading expectations', {
+                    file: CONFIG.INITIALIZATION_JSON_PATH
+                });
+                await clearExpectations();
                 await loadInitializationExpectations();
             }
         });
-        console.log(`Watching initialization file: ${CONFIG.INITIALIZATION_JSON_PATH}`);
+        logger.info('Watching initialization file', {
+            file: CONFIG.INITIALIZATION_JSON_PATH
+        });
     } catch (error) {
-        console.error('Failed to set up initialization file watcher:', error);
+        logError(error, { context: 'file_watcher' });
     }
 }
 
@@ -102,10 +165,13 @@ function configurePersistence() {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
-
-        initializeStore.setPersistencePath(CONFIG.PERSISTED_EXPECTATIONS_PATH);
+        setPersistencePath(CONFIG.PERSISTED_EXPECTATIONS_PATH);
+        logger.info('Persistence enabled', {
+            path: CONFIG.PERSISTED_EXPECTATIONS_PATH
+        });
     } else {
-        initializeStore.disablePersistence();
+        disablePersistence();
+        logger.info('Persistence disabled');
     }
 }
 
@@ -116,24 +182,57 @@ function configurePersistence() {
 async function startServer() {
     try {
         process.env.LOG_LEVEL = CONFIG.LOG_LEVEL;
-
+        
+        // Konfiguracja persystencji przed uruchomieniem serwera
         configurePersistence();
-
         await initializeStore();
+        
+        logger.info(`Starting MockServer on port ${CONFIG.PORT}`);
+        logger.info(`Version: ${CONFIG.VERSION}`);
 
-        await loadInitializationExpectations();
-
-        setupInitializationFileWatcher();
-
-        logVersionInfo();
-
-        app.listen(CONFIG.PORT, CONFIG.HOST, () => {
-            logServerStarted(CONFIG.PORT, CONFIG.HOST);
+        const server = app.listen(CONFIG.PORT, () => {
+            logger.info(`MockServer is running at http://localhost:${CONFIG.PORT}`);
         });
-    } catch (error) {
-        console.error('Failed to start server:', error);
+
+        // Graceful shutdown
+        const shutdown = async () => {
+            logger.info('Shutting down gracefully...');
+            try {
+                await new Promise((resolve) => server.close(resolve));
+                logger.info('Server closed successfully');
+                process.exit(0);
+            } catch (err) {
+                logger.error('Error during shutdown:', err);
+                process.exit(1);
+            }
+        };
+
+        // Handle process signals
+        process.on('SIGTERM', shutdown);
+        process.on('SIGINT', shutdown);
+
+        // Handle uncaught errors
+        process.on('uncaughtException', (err) => {
+            logger.error('Uncaught exception:', err);
+            shutdown();
+        });
+
+        process.on('unhandledRejection', (err) => {
+            logger.error('Unhandled rejection:', err);
+            shutdown();
+        });
+
+        if (CONFIG.PERSIST_EXPECTATIONS) {
+            await loadInitializationExpectations();
+            setupInitializationFileWatcher();
+        }
+    } catch (err) {
+        logger.error('Failed to start server:', err);
         process.exit(1);
     }
 }
 
-startServer();
+startServer().catch(err => {
+    logger.error('Error during server startup:', err);
+    process.exit(1);
+});
