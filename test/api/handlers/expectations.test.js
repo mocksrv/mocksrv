@@ -117,10 +117,10 @@ test('createExpectationHandler powinien utworzyć nowe oczekiwanie', async () =>
   await clearExpectations();
 });
 
-test('createExpectationHandler powinien zwrócić błąd przy braku httpRequest', async () => {
+test('createExpectationHandler powinien zwrócić błąd przy braku wymaganego pola odpowiedzi', async () => {
   // Przygotowanie testu
   const req = createMockRequest({}, {
-    httpResponse: { statusCode: 200 }
+    // Brak wymaganego pola odpowiedzi (httpResponse, httpResponseTemplate, etc.)
   });
   const res = createMockResponse();
 

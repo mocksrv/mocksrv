@@ -12,11 +12,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageJsonPath = path.join(__dirname, '../../package.json');
 const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
-// Logger configuration
 const DEFAULT_LOG_LEVEL = 'info';
 const LOG_LEVELS = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
 
-// Create base logger instance
 const createLogger = (level = DEFAULT_LOG_LEVEL) => pino({
     level,
     transport: {
@@ -33,10 +31,8 @@ const createLogger = (level = DEFAULT_LOG_LEVEL) => pino({
     }
 });
 
-// Initialize logger with environment settings
 const baseLogger = createLogger(process.env.MOCKSERVER_LOG_LEVEL || DEFAULT_LOG_LEVEL);
 
-// Core logging functions
 const log = (level) => (message, context = {}) => {
     if (!baseLogger[level]) return;
     baseLogger[level]({ msg: message, ...context });
@@ -49,7 +45,6 @@ export const warn = log('warn');
 export const error = log('error');
 export const fatal = log('fatal');
 
-// MockServer specific logging functions
 export const logServerStarted = (port, host = '0.0.0.0') => {
     info('MockServer started', {
         event: 'SERVER_STARTED',
@@ -70,15 +65,19 @@ export const logRequest = (request, type = 'RECEIVED') => {
     });
 };
 
+export const logRequestReceived = logRequest;
+
 export const logResponse = (response, request) => {
     debug(`Response sent with status ${response.statusCode}`, {
         event: 'RESPONSE_SENT',
         status: response.statusCode,
         method: request?.method,
         path: request?.path,
-        responseTime: response.getHeader('X-Response-Time')
+        responseTime: response.get ? response.get('X-Response-Time') : undefined
     });
 };
+
+export const logResponseSent = logResponse;
 
 export const logExpectation = (expectation, action = 'CREATED') => {
     info(`Expectation ${action.toLowerCase()}: ${expectation.id}`, {
@@ -108,14 +107,14 @@ export const logMatch = (request, expectation, matched = true) => {
 };
 
 export const logError = (error, additionalContext = {}) => {
-    error(error.message || 'An error occurred', {
+    baseLogger.error({
+        msg: error.message || 'An error occurred',
         event: 'ERROR',
         stack: error.stack,
         ...additionalContext
     });
 };
 
-// Configuration functions
 export const setLogLevel = (level) => {
     if (LOG_LEVELS.includes(level.toLowerCase())) {
         baseLogger.level = level.toLowerCase();
@@ -124,7 +123,15 @@ export const setLogLevel = (level) => {
     }
 };
 
-// Utility functions for testing
+let isSilent = false;
+
+export const setSilentMode = (silent) => {
+    isSilent = silent;
+    setLogLevel(silent ? 'fatal' : DEFAULT_LOG_LEVEL);
+};
+
+export const enableSilentMode = () => setSilentMode(true);
+
 export const createTestLogger = () => {
     const logs = [];
     const testLogger = {
@@ -140,7 +147,6 @@ export const createTestLogger = () => {
     return testLogger;
 };
 
-// Export default logger for backward compatibility
 export default {
     trace,
     debug,
@@ -150,9 +156,11 @@ export default {
     fatal,
     logServerStarted,
     logRequest,
+    logRequestReceived,
     logResponse,
+    logResponseSent,
     logExpectation,
     logMatch,
     logError,
     setLogLevel
-}; 
+};
