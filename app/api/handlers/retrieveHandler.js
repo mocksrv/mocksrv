@@ -7,7 +7,7 @@ import { getAllExpectations } from '../../expectations/expectationStore.js';
 import logger from '../../utils/logger.js';
 import { matchRequest } from '../../expectations/matchers/matcher.js';
 
-// Tymczasowe zmienne do przechowywania historii requestów (w przyszłości powinny być w osobnym module)
+
 let requestHistory = [];
 let requestResponseHistory = [];
 
@@ -16,7 +16,7 @@ let requestResponseHistory = [];
  * @param {Object} request - Request do dodania do historii
  */
 export function recordRequest(request) {
-  // Ograniczamy historię do 100 requestów
+  
   if (requestHistory.length >= 100) {
     requestHistory.shift();
   }
@@ -32,7 +32,7 @@ export function recordRequest(request) {
  * @param {Object} response - Response
  */
 export function recordRequestResponse(request, response) {
-  // Ograniczamy historię do 100 par request-response
+  
   if (requestResponseHistory.length >= 100) {
     requestResponseHistory.shift();
   }
@@ -103,24 +103,24 @@ function filterExpectations(requestDefinition) {
   
   return allExpectations.filter(expectation => {
     try {
-      // Jeśli filtr nie określa wartości, to akceptujemy wszystkie oczekiwania
+      
       if (!expectation.httpRequest) return false;
       
-      // Sprawdzamy pole path
+      
       if (requestDefinition.path && expectation.httpRequest.path) {
         if (requestDefinition.path !== expectation.httpRequest.path) {
           return false;
         }
       }
       
-      // Sprawdzamy pole method
+      
       if (requestDefinition.method && expectation.httpRequest.method) {
         if (requestDefinition.method !== expectation.httpRequest.method) {
           return false;
         }
       }
       
-      // Jeśli wszystkie warunki są spełnione, zwracamy true
+      
       return true;
     } catch (error) {
       return false;
@@ -137,7 +137,7 @@ export function retrieveHandler(req, res) {
   const format = (req.query.format || 'json').toLowerCase();
   const type = (req.query.type || 'requests').toLowerCase();
 
-  // Walidacja formatu
+  
   if (!['java', 'json', 'log_entries'].includes(format)) {
     return res.status(400).json({
       error: 'incorrect request format',
@@ -145,14 +145,14 @@ export function retrieveHandler(req, res) {
     });
   }
 
-  // Walidacja typu
+  
   const validTypes = {
     'logs': 'logs',
     'requests': 'requests',
     'request_responses': 'request_responses',
     'recorded_expectations': 'recorded_expectations',
     'active_expectations': 'active_expectations',
-    // Obsługa wariantów z wielkimi literami
+    
     'LOGS': 'logs',
     'REQUESTS': 'requests',
     'REQUEST_RESPONSES': 'request_responses',
@@ -168,13 +168,13 @@ export function retrieveHandler(req, res) {
     });
   }
 
-  // Pobierz filter z body jeśli istnieje
+  
   const requestFilter = req.body && Object.keys(req.body).length > 0 ? req.body : null;
 
   try {
     switch (normalizedType) {
       case 'active_expectations': {
-        // Filtrowanie oczekiwań
+        
         const expectations = filterExpectations(requestFilter);
         
         switch (format) {
@@ -182,7 +182,7 @@ export function retrieveHandler(req, res) {
             res.status(200).json(expectations);
             break;
           case 'java':
-            // Konwersja do formatu Java nie jest obecnie wspierana w pełni
+            
             res.status(200).type('application/java').send(
               `List<Expectation> expectations = Arrays.asList(\n${
                 expectations.map(exp => `    new Expectation(${JSON.stringify(exp)})`).join(',\n')
@@ -199,7 +199,7 @@ export function retrieveHandler(req, res) {
       }
 
       case 'requests': {
-        // Filtrowanie historii requestów
+        
         const requests = filterRequestHistory(requestFilter);
         
         switch (format) {
@@ -223,7 +223,7 @@ export function retrieveHandler(req, res) {
       }
 
       case 'request_responses': {
-        // Filtrowanie historii request-response
+        
         const requestResponses = filterRequestResponseHistory(requestFilter);
         
         switch (format) {
@@ -249,12 +249,12 @@ export function retrieveHandler(req, res) {
       }
 
       case 'recorded_expectations':
-        // Obecnie nie przechowujemy recorded expectations osobno
+        
         res.status(200).json([]);
         break;
 
       case 'logs':
-        // Zwracamy pustą odpowiedź dla logów, gdyż obecnie nie przechowujemy logów
+        
         res.status(200).type('text/plain').send('');
         break;
     }

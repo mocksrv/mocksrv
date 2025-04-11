@@ -4,7 +4,8 @@
  */
 
 import xpath from 'xpath';
-import { DOMParser } from 'xmldom';
+import pkg from 'xmldom';
+const { DOMParser } = pkg;
 
 /**
  * Cichy logger do wyciszenia komunikatów XMLDom
@@ -34,16 +35,16 @@ export function matchXPath(actual, expression) {
   }
 
   try {
-    // Tymczasowo zastępujemy console.warn i console.error
+    
     const originalWarn = console.warn;
     const originalError = console.error;
     
-    // Całkowicie wyłączamy komunikaty konsoli podczas parsowania XML
+    
     console.warn = function() {};
     console.error = function() {};
     
     try {
-      // Używamy opcji silentLogger do wyciszenia ostrzeżeń i błędów
+      
       const doc = new DOMParser({
         errorHandler: {
           warning: function() {},
@@ -56,7 +57,7 @@ export function matchXPath(actual, expression) {
       const nodes = xpath.select(expression, doc);
       return nodes.length > 0;
     } finally {
-      // Przywracamy oryginalne funkcje konsoli
+      
       console.warn = originalWarn;
       console.error = originalError;
     }

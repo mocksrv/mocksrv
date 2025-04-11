@@ -13,7 +13,7 @@ import {
 import { findMatchingExpectation } from '../request-handling/matcher.js';
 import logger from '../utils/logger.js';
 
-// Pobierz ścieżkę z zmiennych środowiskowych lub użyj domyślnej
+
 const defaultPath = process.env.MOCKSRV_EXPECTATIONS_PATH || './data/expectations.json';
 
 let expectations = new Map();
@@ -183,6 +183,7 @@ export async function clearExpectations(options = {}) {
   expectations.clear();
   initializeIndices(expectations);
 
+  
   if (persistenceEnabled) {
     await saveToFile();
   }
@@ -260,18 +261,18 @@ export async function upsertExpectation(expectation) {
   let existingId = expectation.id;
   let updatedExpectation;
 
-  // Validate priority
+  
   const priority = expectation.priority !== undefined ? expectation.priority : 0;
 
   if (existingId && expectations.has(existingId)) {
-    // Update existing expectation
+    
     updatedExpectation = { ...expectation, priority };
     
     removeFromIndices(existingId, expectations.get(existingId));
     expectations.set(existingId, updatedExpectation);
     indexExpectation(existingId, updatedExpectation);
   } else {
-    // Create new expectation
+    
     existingId = uuidv4();
     updatedExpectation = { ...expectation, id: existingId, priority };
     

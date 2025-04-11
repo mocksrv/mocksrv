@@ -176,7 +176,7 @@ test('deepContains handles JSON Unit placeholders', (t) => {
 });
 
 test('matchJsonUnitPlaceholder handles all placeholder types', (t) => {
-  // IGNORE placeholder
+  
   assert.strictEqual(
     matchJsonUnitPlaceholder('anything', JsonUnitPlaceholder.IGNORE),
     true
@@ -186,7 +186,7 @@ test('matchJsonUnitPlaceholder handles all placeholder types', (t) => {
     true
   );
 
-  // ANY_STRING placeholder
+  
   assert.strictEqual(
     matchJsonUnitPlaceholder('test', JsonUnitPlaceholder.ANY_STRING),
     true
@@ -196,7 +196,7 @@ test('matchJsonUnitPlaceholder handles all placeholder types', (t) => {
     false
   );
 
-  // ANY_NUMBER placeholder
+  
   assert.strictEqual(
     matchJsonUnitPlaceholder(123, JsonUnitPlaceholder.ANY_NUMBER),
     true
@@ -206,7 +206,7 @@ test('matchJsonUnitPlaceholder handles all placeholder types', (t) => {
     false
   );
 
-  // ANY_BOOLEAN placeholder
+  
   assert.strictEqual(
     matchJsonUnitPlaceholder(true, JsonUnitPlaceholder.ANY_BOOLEAN),
     true
@@ -220,7 +220,7 @@ test('matchJsonUnitPlaceholder handles all placeholder types', (t) => {
     false
   );
 
-  // ANY_OBJECT placeholder
+  
   assert.strictEqual(
     matchJsonUnitPlaceholder({}, JsonUnitPlaceholder.ANY_OBJECT),
     true
@@ -238,7 +238,7 @@ test('matchJsonUnitPlaceholder handles all placeholder types', (t) => {
     false
   );
 
-  // ANY_ARRAY placeholder
+  
   assert.strictEqual(
     matchJsonUnitPlaceholder([], JsonUnitPlaceholder.ANY_ARRAY),
     true
@@ -252,7 +252,7 @@ test('matchJsonUnitPlaceholder handles all placeholder types', (t) => {
     false
   );
 
-  // Unknown placeholder
+  
   assert.strictEqual(
     matchJsonUnitPlaceholder('test', 'invalid-placeholder'),
     false

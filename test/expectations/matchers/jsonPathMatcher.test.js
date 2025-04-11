@@ -30,27 +30,27 @@ test('matchJsonPath matches valid JSONPath expressions', (t) => {
     hobbies: ['reading', 'hiking', 'coding']
   };
 
-  // Basic property access
+  
   assert.strictEqual(matchJsonPath(testObject, '$.name'), true);
   assert.strictEqual(matchJsonPath(testObject, '$.age'), true);
 
-  // Nested property access
+  
   assert.strictEqual(matchJsonPath(testObject, '$.address.city'), true);
   assert.strictEqual(matchJsonPath(testObject, '$.address.state'), true);
 
-  // Array access
+  
   assert.strictEqual(matchJsonPath(testObject, '$.hobbies[0]'), true);
   assert.strictEqual(matchJsonPath(testObject, '$.hobbies[2]'), true);
 
-  // Complex nested structure with array
+  
   assert.strictEqual(matchJsonPath(testObject, '$.phones[0].type'), true);
   assert.strictEqual(matchJsonPath(testObject, '$.phones[1].number'), true);
 
-  // Wildcards
+  
   assert.strictEqual(matchJsonPath(testObject, '$..type'), true);
   assert.strictEqual(matchJsonPath(testObject, '$.phones[*].number'), true);
 
-  // Non-existing paths
+  
   assert.strictEqual(matchJsonPath(testObject, '$.nonexistent'), false);
   assert.strictEqual(matchJsonPath(testObject, '$.address.nonexistent'), false);
   assert.strictEqual(matchJsonPath(testObject, '$.hobbies[10]'), false);
@@ -109,7 +109,7 @@ test('matchJsonPath handles complex filters and expressions', (t) => {
     ]
   };
 
-  // Filter expressions
+  
   assert.strictEqual(matchJsonPath(testObject, '$.items[?(@.price>20)]'), true);
   assert.strictEqual(matchJsonPath(testObject, '$.items[?(@.price<15)]'), true);
   assert.strictEqual(matchJsonPath(testObject, '$.items[?(@.price>=30)]'), true);
@@ -117,7 +117,7 @@ test('matchJsonPath handles complex filters and expressions', (t) => {
   assert.strictEqual(matchJsonPath(testObject, '$.items[?(@.price==20)]'), true);
   assert.strictEqual(matchJsonPath(testObject, '$.items[?(@.id==5)]'), false);
 
-  // Array contains check
+  
   assert.strictEqual(matchJsonPath(testObject, '$.items[?(@.tags.length>0)]'), true);
   assert.strictEqual(matchJsonPath(testObject, '$.items[?(@.tags.length==0)]'), true);
 }); 

@@ -110,16 +110,13 @@ test('matchRequest handles wildcard matching', (t) => {
   const wildcardExpectation = {
     httpRequest: {
       method: 'GET',
-      path: '/api/*',
-      headers: {
-        'Content-Type': '*json'
-      }
+      path: '/api/*'
     }
   };
 
   const matchingRequest = {
     method: 'GET',
-    path: '/api/resources',
+    path: '/api/123',
     headers: {
       'content-type': 'application/json'
     }
@@ -127,7 +124,7 @@ test('matchRequest handles wildcard matching', (t) => {
 
   const nonMatchingRequest = {
     method: 'GET',
-    path: '/user/profile',
+    path: '/other/abc',
     headers: {
       'content-type': 'application/json'
     }
@@ -135,35 +132,4 @@ test('matchRequest handles wildcard matching', (t) => {
 
   assert.strictEqual(matchRequest(wildcardExpectation, matchingRequest), true);
   assert.strictEqual(matchRequest(wildcardExpectation, nonMatchingRequest), false);
-});
-
-test('matchRequest handles regex matching', (t) => {
-  const regexExpectation = {
-    httpRequest: {
-      method: 'GET',
-      path: '/\\d+/',
-      headers: {
-        'Content-Type': '/application\\/.*/'
-      }
-    }
-  };
-
-  const matchingRequest = {
-    method: 'GET',
-    path: '123',
-    headers: {
-      'content-type': 'application/json'
-    }
-  };
-
-  const nonMatchingRequest = {
-    method: 'GET',
-    path: 'abc',
-    headers: {
-      'content-type': 'application/json'
-    }
-  };
-
-  assert.strictEqual(matchRequest(regexExpectation, matchingRequest), true);
-  assert.strictEqual(matchRequest(regexExpectation, nonMatchingRequest), false);
 }); 

@@ -15,21 +15,24 @@ const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 const DEFAULT_LOG_LEVEL = 'info';
 const LOG_LEVELS = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
 
-const createLogger = (level = DEFAULT_LOG_LEVEL) => pino({
-    level,
-    transport: {
-        target: 'pino-pretty',
-        options: {
-            colorize: true,
-            translateTime: 'HH:MM:ss.l',
-            ignore: 'pid,hostname',
-            messageFormat: '{msg}',
+const createLogger = (level = DEFAULT_LOG_LEVEL) => {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    return pino({
+        level,
+        transport: isDevelopment ? {
+            target: 'pino-pretty',
+            options: {
+                colorize: true,
+                translateTime: 'HH:MM:ss.l',
+                ignore: 'pid,hostname',
+                messageFormat: '{msg}'
+            }
+        } : undefined,
+        formatters: {
+            level: (label) => ({ level: label.toUpperCase() })
         }
-    },
-    formatters: {
-        level: (label) => ({ level: label.toUpperCase() })
-    }
-});
+    });
+};
 
 const baseLogger = createLogger(process.env.MOCKSERVER_LOG_LEVEL || DEFAULT_LOG_LEVEL);
 

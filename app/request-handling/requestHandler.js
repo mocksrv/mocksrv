@@ -68,10 +68,10 @@ export function requestHandler(req, res, next) {
     body: req.body
   };
 
-  // Rejestrujemy request w historii
+  
   recordRequest(request);
 
-  // Logowanie requestu
+  
   logRequest(request);
   
   try {
@@ -108,7 +108,7 @@ export function requestHandler(req, res, next) {
       
       res.status(500).json(errorResponse);
       
-      // Rejestrujemy request i response w historii
+      
       recordRequestResponse(request, {
         statusCode: 500,
         body: errorResponse
@@ -137,7 +137,7 @@ export function requestHandler(req, res, next) {
     
     res.status(500).json(errorResponse);
     
-    // Rejestrujemy request i response w historii
+    
     recordRequestResponse(request, {
       statusCode: 500,
       body: errorResponse
@@ -155,27 +155,44 @@ export function requestHandler(req, res, next) {
  * @returns {Promise<void>}
  */
 async function handleResponse(request, res, expectation) {
-  const { httpResponse, httpForward } = expectation;
+  try {
+    const { httpResponse, httpForward } = expectation;
 
-  if (httpResponse) {
-    await sendMockResponse(request, res, httpResponse);
-  } else if (httpForward) {
-    await sendForwardedResponse(request, res, httpForward);
-  } else {
+    if (httpResponse) {
+      await sendMockResponse(request, res, httpResponse);
+    } else if (httpForward) {
+      await sendForwardedResponse(request, res, httpForward);
+    } else {
+      const errorResponse = {
+        error: 'Invalid expectation configuration',
+        message: 'Expectation must have either httpResponse or httpForward'
+      };
+      
+      res.status(500).json(errorResponse);
+      recordRequestResponse(request, {
+        statusCode: 500,
+        body: errorResponse
+      });
+      logResponse(res, request);
+    }
+  } catch (error) {
     const errorResponse = {
-      error: 'Invalid expectation configuration',
-      message: 'Expectation must have either httpResponse or httpForward'
+      error: 'Response handling error',
+      message: error.message,
+      requestReceived: {
+        method: request.method,
+        path: request.path,
+        query: request.query
+      }
     };
     
     res.status(500).json(errorResponse);
-    
-    // Rejestrujemy request i response w historii
     recordRequestResponse(request, {
       statusCode: 500,
       body: errorResponse
     });
-    
     logResponse(res, request);
+    throw error; // Re-throw for the outer catch block
   }
 }
 
@@ -201,7 +218,7 @@ async function sendMockResponse(request, res, httpResponse) {
     });
   }
 
-  // Przygotuj odpowiedź do rejestracji
+  
   const responseToRecord = {
     statusCode: status,
     headers: res.getHeaders ? res.getHeaders() : {},
@@ -214,7 +231,7 @@ async function sendMockResponse(request, res, httpResponse) {
     res.end();
   }
 
-  // Rejestrujemy request i response w historii
+  
   recordRequestResponse(request, responseToRecord);
   
   logResponse(res, request);
@@ -244,7 +261,7 @@ async function sendForwardedResponse(request, res, httpForward) {
 
     res.status(forwardedResponse.status);
 
-    // Przygotuj odpowiedź do rejestracji
+    
     const responseToRecord = {
       statusCode: forwardedResponse.status,
       headers: forwardedResponse.headers || {},
@@ -257,7 +274,7 @@ async function sendForwardedResponse(request, res, httpForward) {
       res.end();
     }
 
-    // Rejestrujemy request i response w historii
+    
     recordRequestResponse(request, responseToRecord);
     
     logResponse(res, request);
@@ -269,7 +286,7 @@ async function sendForwardedResponse(request, res, httpForward) {
     
     res.status(502).json(errorResponse);
     
-    // Rejestrujemy request i response w historii
+    
     recordRequestResponse(request, {
       statusCode: 502,
       body: errorResponse

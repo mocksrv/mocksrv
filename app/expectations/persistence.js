@@ -7,7 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import logger from '../utils/logger.js';
 
-// Pobierz ścieżkę z zmiennych środowiskowych lub użyj domyślnej
+
 const DEFAULT_PATH = process.env.MOCKSRV_EXPECTATIONS_PATH || './data/expectations.json';
 
 /**
@@ -74,10 +74,11 @@ export async function saveExpectations(expectations, filepath) {
     }
 
     const jsonArray = Array.from(expectations.values());
-
+    
+    
     await fs.promises.writeFile(
       filePath,
-      JSON.stringify(jsonArray, null, 2),
+      JSON.stringify(jsonArray.length ? jsonArray : [], null, 2),
       'utf8'
     );
 

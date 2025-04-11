@@ -23,22 +23,22 @@ export async function clearExpectationsHandler(req, res) {
       });
     }
 
-    // Jeśli jest body request, sprawdź czy to RequestDefinition lub ExpectationId
+    
     if (Object.keys(req.body).length > 0) {
       const requestBody = req.body;
       
-      // Sprawdź czy to ExpectationId
+      
       if (requestBody.id && Object.keys(requestBody).length === 1) {
         const success = await removeExpectation(requestBody.id);
         if (!success) {
-          // Zgodnie ze specyfikacją OpenAPI, zwracamy 400 dla nieprawidłowych danych
+          
           return res.status(400).json({
             error: 'incorrect request format',
             message: `Expectation with id ${requestBody.id} not found`
           });
         }
       } 
-      // Sprawdź czy to RequestDefinition
+      
       else if (requestBody.method || requestBody.path) {
         await clearExpectations({ request: requestBody });
       }
@@ -52,7 +52,7 @@ export async function clearExpectationsHandler(req, res) {
       await clearExpectations();
     }
 
-    // Zgodnie ze specyfikacją OpenAPI, zwracamy 200 OK
+    
     return res.status(200).json({
       message: 'expectations and recorded requests cleared'
     });

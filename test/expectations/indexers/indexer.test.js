@@ -22,7 +22,7 @@ test('getBasePathSegment returns correct segment', (t) => {
 });
 
 test('getCandidateExpectationIds returns method-based candidates', (t) => {
-  // Create test expectations
+  
   const expectations = new Map();
 
   const getExpectation = {
@@ -46,10 +46,10 @@ test('getCandidateExpectationIds returns method-based candidates', (t) => {
   expectations.set('get-expectation', getExpectation);
   expectations.set('post-expectation', postExpectation);
 
-  // Initialize indices
+  
   initializeIndices(expectations);
 
-  // Test method-based lookup
+  
   const getRequest = {
     method: 'GET',
     path: '/api/resource'
@@ -61,7 +61,7 @@ test('getCandidateExpectationIds returns method-based candidates', (t) => {
 });
 
 test('getCandidateExpectationIds returns path-based candidates', (t) => {
-  // Create test expectations
+  
   const expectations = new Map();
 
   const apiExpectation = {
@@ -85,10 +85,10 @@ test('getCandidateExpectationIds returns path-based candidates', (t) => {
   expectations.set('api-expectation', apiExpectation);
   expectations.set('user-expectation', userExpectation);
 
-  // Initialize indices
+  
   initializeIndices(expectations);
 
-  // Test path-based lookup
+  
   const apiRequest = {
     method: 'GET',
     path: '/api/different'
@@ -100,7 +100,7 @@ test('getCandidateExpectationIds returns path-based candidates', (t) => {
 });
 
 test('getCandidateExpectationIds includes wildcard candidates', (t) => {
-  // Create test expectations
+  
   const expectations = new Map();
 
   const wildcardExpectation = {
@@ -124,10 +124,10 @@ test('getCandidateExpectationIds includes wildcard candidates', (t) => {
   expectations.set('wildcard-expectation', wildcardExpectation);
   expectations.set('normal-expectation', normalExpectation);
 
-  // Initialize indices
+  
   initializeIndices(expectations);
 
-  // Any request should include the wildcard expectation as a candidate
+  
   const anyRequest = {
     method: 'GET',
     path: '/some/random/path'
@@ -138,7 +138,7 @@ test('getCandidateExpectationIds includes wildcard candidates', (t) => {
 });
 
 test('removeFromIndices removes expectation from indices', (t) => {
-  // Create test expectations
+  
   const expectations = new Map();
 
   const expectation = {
@@ -152,10 +152,10 @@ test('removeFromIndices removes expectation from indices', (t) => {
 
   expectations.set('test-expectation', expectation);
 
-  // Initialize indices
+  
   initializeIndices(expectations);
 
-  // Verify expectation is indexed
+  
   const request = {
     method: 'GET',
     path: '/api/resource'
@@ -164,10 +164,10 @@ test('removeFromIndices removes expectation from indices', (t) => {
   let candidates = getCandidateExpectationIds(request);
   assert.strictEqual(candidates.has('test-expectation'), true);
 
-  // Remove from indices
+  
   removeFromIndices('test-expectation', expectation);
 
-  // Verify expectation is no longer indexed
+  
   candidates = getCandidateExpectationIds(request);
   assert.strictEqual(candidates.has('test-expectation'), false);
 }); 

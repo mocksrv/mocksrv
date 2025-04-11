@@ -10,6 +10,7 @@ import apiRoutes from './api/routes.js';
 import logger, { logServerStarted, logRequest, logResponse, logError } from './utils/logger.js';
 import fs from 'fs';
 import path from 'path';
+import { validateExpectation } from './expectations/expectationValidator.js';
 
 const CONFIG = {
     HOST: process.env.MOCKSERVER_HOST || 'localhost',
@@ -37,7 +38,7 @@ if (CONFIG.MAX_HEADER_SIZE) {
     app.use(express.text({ type: 'text/plain' }));
 }
 
-// Wildcard middleware do logowania wszystkich żądań
+
 app.use((req, res, next) => {
     const request = {
         method: req.method,
@@ -47,27 +48,27 @@ app.use((req, res, next) => {
         body: req.body
     };
     
-    // Logowanie wszystkich żądań
+    
     logRequest(request);
     
-    // Przechwytywanie odpowiedzi
+    
     const originalSend = res.send;
     const originalEnd = res.end;
     const originalJson = res.json;
     
-    // Przechwytywanie metody send
+    
     res.send = function(body) {
         logResponse(res, request);
         return originalSend.apply(res, arguments);
     };
     
-    // Przechwytywanie metody json
+    
     res.json = function(body) {
         logResponse(res, request);
         return originalJson.apply(res, arguments);
     };
     
-    // Przechwytywanie metody end
+    
     res.end = function(chunk) {
         logResponse(res, request);
         return originalEnd.apply(res, arguments);
@@ -104,6 +105,19 @@ async function loadInitializationExpectations() {
             
             for (const expectation of expectations) {
                 try {
+                    const validationError = validateExpectation(expectation);
+                    if (validationError) {
+                        logError(new Error(`Invalid expectation: ${validationError}`), {
+                            context: 'initialization_validation',
+                            expectation: {
+                                id: expectation.id,
+                                method: expectation.httpRequest?.method,
+                                path: expectation.httpRequest?.path
+                            }
+                        });
+                        continue;
+                    }
+
                     const requestDetails = expectation.httpRequest || {};
                     logger.debug('Loading expectation', {
                         method: requestDetails.method || 'ANY',
@@ -183,7 +197,7 @@ async function startServer() {
     try {
         process.env.LOG_LEVEL = CONFIG.LOG_LEVEL;
         
-        // Konfiguracja persystencji przed uruchomieniem serwera
+        
         configurePersistence();
         await initializeStore();
         
@@ -191,10 +205,10 @@ async function startServer() {
         logger.info(`Version: ${CONFIG.VERSION}`);
 
         const server = app.listen(CONFIG.PORT, () => {
-            logger.info(`MockServer is running at http://localhost:${CONFIG.PORT}`);
+            logger.info(`MockServer is running at http:
         });
 
-        // Graceful shutdown
+        
         const shutdown = async () => {
             logger.info('Shutting down gracefully...');
             try {
@@ -207,11 +221,11 @@ async function startServer() {
             }
         };
 
-        // Handle process signals
+        
         process.on('SIGTERM', shutdown);
         process.on('SIGINT', shutdown);
 
-        // Handle uncaught errors
+        
         process.on('uncaughtException', (err) => {
             logger.error('Uncaught exception:', err);
             shutdown();
