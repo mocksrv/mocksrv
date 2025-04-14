@@ -22,7 +22,6 @@ const validateExpectationSchema = ajv.compile({
 });
 
 /**
- * Validates an expectation object according to MockServer OpenAPI specification
  * @param {Object} expectation - The expectation object to validate
  * @returns {string|null} Error message if validation fails, null if validation succeeds
  */

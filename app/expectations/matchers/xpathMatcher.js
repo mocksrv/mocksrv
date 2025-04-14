@@ -7,13 +7,6 @@ import xpath from 'xpath';
 import pkg from 'xmldom';
 const { DOMParser } = pkg;
 
-/**
- * Cichy logger do wyciszenia komunikatów XMLDom
- */
-const silentLogger = {
-  warning: function() {},
-  error: function() {}
-};
 
 /**
  * Matches XML using XPath expression

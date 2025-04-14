@@ -12,59 +12,71 @@ import {
 } from './indexers/indexer.js';
 import { findMatchingExpectation } from '../request-handling/matcher.js';
 import logger from '../utils/logger.js';
+import AsyncLock from 'async-lock';
 
-
+const lock = new AsyncLock();
 const defaultPath = process.env.MOCKSRV_EXPECTATIONS_PATH || './data/expectations.json';
 
 let expectations = new Map();
 let persistenceEnabled = true;
 let persistencePath = defaultPath;
 
-/**
- * Sets the path for persistence storage
- * @param {string} path - File path for storing expectations
- */
 export function setPersistencePath(path) {
   persistencePath = path;
   logger.info('Setting persistence path', { path });
 }
 
-/**
- * Returns current persistence path
- * @returns {string} Current persistence path
- */
+
 export function getPersistencePath() {
   return persistencePath;
 }
 
-/**
- * Disables expectation persistence
- */
 export function disablePersistence() {
   persistenceEnabled = false;
   logger.info('Persistence disabled');
 }
 
-/**
- * Enables expectation persistence
- */
 export function enablePersistence() {
   persistenceEnabled = true;
   logger.info('Persistence enabled');
 }
 
-/**
- * Initializes the expectation store
- * @returns {Promise<void>}
- */
 export async function initializeStore() {
   try {
     if (persistenceEnabled) {
-      expectations = await loadExpectations(persistencePath);
+      const loadedExpectations = await loadExpectations(persistencePath);
+      
+      expectations.clear();
+      
+      const seenIds = new Set();
+      
+      loadedExpectations.forEach((expectation, id) => {
+        let newId = id;
+        if (seenIds.has(id)) {
+          newId = uuidv4();
+          logger.warn('Duplicate expectation ID found, generating new ID', {
+            event: 'DUPLICATE_ID',
+            oldId: id,
+            newId
+          });
+        }
+        seenIds.add(newId);
+        
+        expectations.set(newId, {
+          ...expectation,
+          id: newId
+        });
+      });
     } else {
       expectations = new Map();
     }
+    
     initializeIndices(expectations);
+    
+    logger.info('Expectation store initialized', {
+      event: 'STORE_INITIALIZED',
+      count: expectations.size
+    });
   } catch (error) {
     logger.error('Failed to initialize expectation store', {
       context: 'store_initialization',
@@ -77,35 +89,43 @@ export async function initializeStore() {
 }
 
 /**
- * Adds a new expectation
  * @param {Object} expectation - Expectation to add
  * @returns {Promise<string>} ID of the added expectation
  */
 export async function addExpectation(expectation) {
-  const id = uuidv4();
-  const priority = expectation.priority !== undefined ? expectation.priority : 0;
-  const newExpectation = { ...expectation, id, priority };
+  return lock.acquire('expectations', async () => {
+    const id = expectation.id || uuidv4();
+    const priority = expectation.priority !== undefined ? expectation.priority : 0;
+    const newExpectation = { ...expectation, id, priority };
 
-  expectations.set(id, newExpectation);
-  indexExpectation(id, newExpectation);
+    if (expectations.has(id)) {
+      logger.warn('Expectation with this ID already exists, generating new ID', {
+        event: 'DUPLICATE_ID',
+        oldId: id
+      });
+      return addExpectation({ ...expectation, id: uuidv4() });
+    }
 
-  if (persistenceEnabled) {
-    await saveToFile();
-  }
-  
-  logger.info('Expectation created', {
-    event: 'EXPECTATION_CREATED',
-    id,
-    method: newExpectation.httpRequest?.method,
-    path: newExpectation.httpRequest?.path,
-    priority
+    expectations.set(id, newExpectation);
+    indexExpectation(id, newExpectation);
+
+    if (persistenceEnabled) {
+      await saveToFile();
+    }
+    
+    logger.info('Expectation created', {
+      event: 'EXPECTATION_CREATED',
+      id,
+      method: newExpectation.httpRequest?.method,
+      path: newExpectation.httpRequest?.path,
+      priority
+    });
+    
+    return id;
   });
-  
-  return id;
 }
 
 /**
- * Gets a specific expectation by ID
  * @param {string} id - Expectation ID
  * @returns {Object|undefined} Expectation if found
  */
@@ -121,7 +141,6 @@ export function getExpectation(id) {
 }
 
 /**
- * Gets all stored expectations
  * @returns {Array<Object>} Array of all expectations
  */
 export function getAllExpectations() {
@@ -134,7 +153,6 @@ export function getAllExpectations() {
 }
 
 /**
- * Clears expectations based on provided criteria
  * @param {Object} [options] - Options for clearing expectations
  * @param {string} [options.id] - Clear expectation with specific ID
  * @param {Object} [options.request] - Clear expectations matching this request definition
@@ -195,39 +213,39 @@ export async function clearExpectations(options = {}) {
 }
 
 /**
- * Removes a specific expectation
  * @param {string} id - Expectation ID to remove
  * @returns {Promise<boolean>} True if removed, false if not found
  */
 export async function removeExpectation(id) {
-  const expectation = expectations.get(id);
-  if (!expectation) {
-    logger.debug('Expectation not found for removal', {
-      event: 'EXPECTATION_REMOVE_FAILED',
-      id
+  return lock.acquire('expectations', async () => {
+    const expectation = expectations.get(id);
+    if (!expectation) {
+      logger.debug('Expectation not found for removal', {
+        event: 'EXPECTATION_REMOVE_FAILED',
+        id
+      });
+      return false;
+    }
+
+    removeFromIndices(id, expectation);
+    expectations.delete(id);
+
+    if (persistenceEnabled) {
+      await saveToFile();
+    }
+    
+    logger.info('Expectation removed', {
+      event: 'EXPECTATION_REMOVED',
+      id,
+      method: expectation.httpRequest?.method,
+      path: expectation.httpRequest?.path
     });
-    return false;
-  }
-
-  removeFromIndices(id, expectation);
-  expectations.delete(id);
-
-  if (persistenceEnabled) {
-    await saveToFile();
-  }
-  
-  logger.info('Expectation removed', {
-    event: 'EXPECTATION_REMOVED',
-    id,
-    method: expectation.httpRequest?.method,
-    path: expectation.httpRequest?.path
+    
+    return true;
   });
-  
-  return true;
 }
 
 /**
- * Finds a matching expectation for a request
  * @param {Object} request - Request to match
  * @returns {Object|null} Matching expectation or null
  */
@@ -236,16 +254,16 @@ export function findExpectationForRequest(request) {
 }
 
 /**
- * Saves current expectations to file
  * @returns {Promise<void>}
  */
 async function saveToFile() {
   if (!persistenceEnabled) return;
-  await saveExpectations(expectations, persistencePath);
+  return lock.acquire('file', async () => {
+    await saveExpectations(expectations, persistencePath);
+  });
 }
 
 /**
- * For testing purposes only
  * @returns {Map<string, Object>} The expectations map
  */
 export function getExpectationsMap() {
@@ -253,7 +271,6 @@ export function getExpectationsMap() {
 }
 
 /**
- * Updates existing expectation or creates new one
  * @param {Object} expectation - Expectation to upsert
  * @returns {Promise<Object>} Updated or created expectation
  */

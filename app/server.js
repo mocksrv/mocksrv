@@ -11,6 +11,7 @@ import logger, { logServerStarted, logRequest, logResponse, logError } from './u
 import fs from 'fs';
 import path from 'path';
 import { validateExpectation } from './expectations/expectationValidator.js';
+import { isFileSaving, getLastSavedContent, watchFile } from './expectations/persistence.js';
 
 const CONFIG = {
     HOST: process.env.MOCKSERVER_HOST || 'localhost',
@@ -31,13 +32,43 @@ const CONFIG = {
 const app = express();
 
 if (CONFIG.MAX_HEADER_SIZE) {
-    app.use(express.json({ limit: `${CONFIG.MAX_HEADER_SIZE}kb` }));
+    app.use(express.json({ limit: `${CONFIG.MAX_HEADER_SIZE}kb`, verify: (req, res, buf, encoding) => {
+        if (buf && buf.length) {
+            req.rawBody = buf.toString(encoding || 'utf8');
+        }
+    } }));
     app.use(express.text({ type: 'text/plain', limit: `${CONFIG.MAX_HEADER_SIZE}kb` }));
 } else {
-    app.use(express.json());
+    app.use(express.json({ verify: (req, res, buf, encoding) => {
+        if (buf && buf.length) {
+            req.rawBody = buf.toString(encoding || 'utf8');
+        }
+    } }));
     app.use(express.text({ type: 'text/plain' }));
 }
 
+app.use(express.urlencoded({ 
+    extended: true,
+    verify: (req, res, buf, encoding) => {
+        if (buf && buf.length) {
+            req.rawBody = buf.toString(encoding || 'utf8');
+        }
+    }
+}));
+
+app.use((req, res, next) => {
+    logger.debug('Incoming request', {
+        event: 'REQUEST_DEBUG',
+        method: req.method,
+        url: req.url,
+        originalUrl: req.originalUrl,
+        path: req.path,
+        hostname: req.hostname,
+        ip: req.ip,
+        headers: req.headers
+    });
+    next();
+});
 
 app.use((req, res, next) => {
     const request = {
@@ -48,41 +79,79 @@ app.use((req, res, next) => {
         body: req.body
     };
     
-    
     logRequest(request);
     
+    let responseLogged = false;
     
     const originalSend = res.send;
     const originalEnd = res.end;
     const originalJson = res.json;
     
-    
-    res.send = function(body) {
-        logResponse(res, request);
-        return originalSend.apply(res, arguments);
+    const logResponseOnce = () => {
+        if (!responseLogged) {
+            logResponse(res, request);
+            responseLogged = true;
+        }
     };
-    
-    
-    res.json = function(body) {
-        logResponse(res, request);
-        return originalJson.apply(res, arguments);
-    };
-    
     
     res.end = function(chunk) {
-        logResponse(res, request);
+        logResponseOnce();
         return originalEnd.apply(res, arguments);
     };
     
+    res.send = function(body) {
+        return originalSend.apply(res, arguments);
+    };
+    
+    res.json = function(body) {
+        return originalJson.apply(res, arguments);
+    };
+    
     next();
+});
+
+app.use((req, res, next) => {
+    const _send = res.send;
+    res.send = function (body) {
+        if (res.statusCode === 404) {
+            logger.debug('404 Not Found', {
+                event: 'NOT_FOUND',
+                method: req.method,
+                url: req.url,
+                path: req.path,
+                headers: req.headers,
+                body: req.body
+            });
+        }
+        res.send = _send;
+        return res.send(body);
+    };
+    next();
+});
+
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
 });
 
 app.use(requestHandler);
 
 app.use(apiRoutes);
 
+app.use((req, res) => {
+    logger.debug('Unhandled request', {
+        event: 'UNHANDLED_REQUEST',
+        method: req.method,
+        url: req.url,
+        path: req.path,
+        headers: req.headers
+    });
+    res.status(404).json({
+        error: 'Not Found',
+        message: `No handler found for ${req.method} ${req.path}`
+    });
+});
+
 /**
- * Loads expectations from an initialization JSON file
  * @returns {Promise<void>}
  */
 async function loadInitializationExpectations() {
@@ -146,22 +215,60 @@ async function loadInitializationExpectations() {
     }
 }
 
-/**
- * Sets up file watcher for initialization JSON if enabled
- */
 function setupInitializationFileWatcher() {
     if (!CONFIG.WATCH_INITIALIZATION_JSON || !CONFIG.INITIALIZATION_JSON_PATH) return;
 
     try {
-        fs.watch(CONFIG.INITIALIZATION_JSON_PATH, async (eventType) => {
-            if (eventType === 'change') {
-                logger.info('Initialization file changed, reloading expectations', {
-                    file: CONFIG.INITIALIZATION_JSON_PATH
+        const stopWatching = watchFile(CONFIG.INITIALIZATION_JSON_PATH, async () => {
+            logger.info('Initialization file changed, reloading expectations', {
+                file: CONFIG.INITIALIZATION_JSON_PATH
+            });
+            
+            try {
+                const content = await fs.promises.readFile(CONFIG.INITIALIZATION_JSON_PATH, 'utf8');
+                const expectations = JSON.parse(content);
+                
+                if (Array.isArray(expectations)) {
+                    await clearExpectations();
+                    for (const expectation of expectations) {
+                        try {
+                            const validationError = validateExpectation(expectation);
+                            if (validationError) {
+                                throw new Error(`Invalid expectation: ${validationError}`);
+                            }
+                            await addExpectation(expectation);
+                        } catch (expError) {
+                            logger.error('Failed to add expectation', {
+                                error: expError.message,
+                                expectation
+                            });
+                        }
+                    }
+                } else {
+                    throw new Error('Expectations file must contain an array');
+                }
+            } catch (error) {
+                logger.error('Failed to reload expectations, restoring last known good state', {
+                    error: error.message
                 });
-                await clearExpectations();
-                await loadInitializationExpectations();
+                
+                const lastContent = getLastSavedContent();
+                if (lastContent) {
+                    await clearExpectations();
+                    for (const expectation of lastContent) {
+                        await addExpectation(expectation);
+                    }
+                }
             }
         });
+
+        process.on('SIGTERM', () => {
+            stopWatching();
+        });
+        process.on('SIGINT', () => {
+            stopWatching();
+        });
+
         logger.info('Watching initialization file', {
             file: CONFIG.INITIALIZATION_JSON_PATH
         });
@@ -197,7 +304,6 @@ async function startServer() {
     try {
         process.env.LOG_LEVEL = CONFIG.LOG_LEVEL;
         
-        
         configurePersistence();
         await initializeStore();
         
@@ -205,10 +311,9 @@ async function startServer() {
         logger.info(`Version: ${CONFIG.VERSION}`);
 
         const server = app.listen(CONFIG.PORT, () => {
-            logger.info(`MockServer is running at http:
+            logger.info(`MockServer is running at http://${CONFIG.HOST}:${CONFIG.PORT}`);
         });
 
-        
         const shutdown = async () => {
             logger.info('Shutting down gracefully...');
             try {
@@ -221,11 +326,9 @@ async function startServer() {
             }
         };
 
-        
         process.on('SIGTERM', shutdown);
         process.on('SIGINT', shutdown);
 
-        
         process.on('uncaughtException', (err) => {
             logger.error('Uncaught exception:', err);
             shutdown();

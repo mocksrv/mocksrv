@@ -14,11 +14,11 @@ let wildcardExpectations = new Set();
  */
 export function getBasePathSegment(path) {
   if (!path) return null;
-
-  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-  const firstSegment = cleanPath.split('/')[0];
-
-  return '/' + firstSegment;
+  
+  const segments = path.split('/').filter(segment => segment);
+  if (segments.length === 0) return path;
+  
+  return '/' + segments[0];
 }
 
 /**
@@ -41,7 +41,17 @@ export function initializeIndices(expectations) {
  * @param {Object} expectation - Expectation object
  */
 export function indexExpectation(id, expectation) {
-  if (expectation.type !== 'http') return;
+  if (!expectation.httpRequest) {
+    console.log('Skipping non-http expectation (no httpRequest):', id);
+    return;
+  }
+
+  const isForwardExpectation = !!expectation.httpForward;
+  const isResponseExpectation = !!expectation.httpResponse;
+
+  if (!isForwardExpectation && !isResponseExpectation) {
+    return;
+  }
 
   const { httpRequest } = expectation;
 
@@ -56,17 +66,24 @@ export function indexExpectation(id, expectation) {
   if (httpRequest.path) {
     const pathValue = typeof httpRequest.path === 'object' ? httpRequest.path.value : httpRequest.path;
 
-    if (pathValue.includes('*')) {
+    if (pathValue.includes('*') || pathValue.includes('.') || 
+        pathValue.includes('[') || pathValue.includes('(') || 
+        pathValue.includes('?') || pathValue.includes('+')) {
+      
       wildcardExpectations.add(id);
     } else {
-      const baseSegment = getBasePathSegment(pathValue);
-      if (baseSegment) {
-        if (!pathIndex.has(baseSegment)) {
-          pathIndex.set(baseSegment, new Set());
+      const path = getBasePathSegment(pathValue);
+      if (path) {
+        if (!pathIndex.has(path)) {
+          pathIndex.set(path, new Set());
         }
-        pathIndex.get(baseSegment).add(id);
+        pathIndex.get(path).add(id);
       }
     }
+  }
+  
+  if (isForwardExpectation) {
+    wildcardExpectations.add(id);
   }
 }
 
@@ -76,7 +93,7 @@ export function indexExpectation(id, expectation) {
  * @param {Object} expectation - Expectation object
  */
 export function removeFromIndices(id, expectation) {
-  if (expectation.type !== 'http') return;
+  if (!expectation.httpRequest) return;
 
   const { httpRequest } = expectation;
 
@@ -93,9 +110,9 @@ export function removeFromIndices(id, expectation) {
     if (pathValue.includes('*')) {
       wildcardExpectations.delete(id);
     } else {
-      const baseSegment = getBasePathSegment(pathValue);
-      if (baseSegment && pathIndex.has(baseSegment)) {
-        pathIndex.get(baseSegment).delete(id);
+      const path = getBasePathSegment(pathValue);
+      if (path && pathIndex.has(path)) {
+        pathIndex.get(path).delete(id);
       }
     }
   }
@@ -110,26 +127,16 @@ export function getCandidateExpectationIds(request) {
   const candidates = new Set();
 
   if (methodIndex.has(request.method)) {
-    const methodCandidates = methodIndex.get(request.method);
-
-    if (request.path === '/api/resource' && request.method === 'GET') {
-      methodCandidates.forEach(id => {
-        if (id === 'get-expectation' || id === 'test-expectation') {
-          candidates.add(id);
-        }
-      });
-    } else if (request.path === '/api/different' && request.method === 'GET') {
-      methodCandidates.forEach(id => {
-        if (id === 'api-expectation') {
-          candidates.add(id);
-        }
-      });
-    } else {
-      methodCandidates.forEach(id => candidates.add(id));
-    }
+    methodIndex.get(request.method).forEach(id => candidates.add(id));
   }
 
   wildcardExpectations.forEach(id => candidates.add(id));
 
+  const path = getBasePathSegment(request.path);
+
+  if (path && pathIndex.has(path)) {
+    pathIndex.get(path).forEach(id => candidates.add(id));
+  }
+
   return candidates;
-} 
+}

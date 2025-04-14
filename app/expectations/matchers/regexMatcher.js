@@ -9,19 +9,13 @@
  * @param {string} pattern - Regular expression pattern
  * @returns {boolean} True if matches
  */
-export function matchRegex(actual, pattern) {
-  if (typeof actual !== 'string') {
-    try {
-      actual = JSON.stringify(actual);
-    } catch (e) {
-      return false;
-    }
-  }
-
+export const matchRegex = (value, pattern) => {
+  if (!value || !pattern) return false;
+  
   try {
     const regex = new RegExp(pattern);
-    return regex.test(actual);
-  } catch (e) {
+    return regex.test(String(value));
+  } catch {
     return false;
   }
-} 
+}; 

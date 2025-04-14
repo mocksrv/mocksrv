@@ -9,14 +9,13 @@
  * @param {string} expected - Expected string value
  * @returns {boolean} True if matches
  */
-export function matchString(actual, expected) {
-  if (typeof actual !== 'string') {
-    try {
-      actual = JSON.stringify(actual);
-    } catch (e) {
-      return false;
-    }
-  }
-
-  return actual === expected;
-} 
+export const matchString = (value, expected, { subString = false } = {}) => {
+  if (!value || !expected) return false;
+  
+  const stringValue = String(value);
+  const stringExpected = String(expected);
+  
+  return subString ? 
+    stringValue.includes(stringExpected) : 
+    stringValue === stringExpected;
+}; 

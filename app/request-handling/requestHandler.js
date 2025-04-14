@@ -7,6 +7,7 @@ import { findExpectationForRequest } from '../expectations/expectationStore.js';
 import logger, { logRequest, logResponse, logMatch, logError } from '../utils/logger.js';
 import { forwardRequest } from '../http-forwarding/forwarder.js';
 import { recordRequest, recordRequestResponse } from '../api/handlers/retrieveHandler.js';
+import os from 'os';
 
 /**
  * Creates a promise that resolves after the specified delay
@@ -63,9 +64,11 @@ export function requestHandler(req, res, next) {
   const request = {
     method: req.method,
     path: req.path,
-    query: req.query,
+    originalUrl: req.originalUrl,
     headers: req.headers,
-    body: req.body
+    query: req.query,
+    body: req.body,
+    rawBody: req.rawBody
   };
 
   
@@ -192,7 +195,7 @@ async function handleResponse(request, res, expectation) {
       body: errorResponse
     });
     logResponse(res, request);
-    throw error; // Re-throw for the outer catch block
+    throw error;
   }
 }
 
@@ -214,7 +217,11 @@ async function sendMockResponse(request, res, httpResponse) {
 
   if (httpResponse.headers) {
     Object.entries(httpResponse.headers).forEach(([key, value]) => {
-      res.set(key, value);
+      if (Array.isArray(value) && value.length > 0) {
+        res.set(key, value[0]);
+      } else {
+        res.set(key, value);
+      }
     });
   }
 
@@ -238,7 +245,7 @@ async function sendMockResponse(request, res, httpResponse) {
 }
 
 /**
- * Forwards the request and sends the response
+ * Sends a forwarded response
  * @param {Object} request - Request object
  * @param {import('express').Response} res - Express response
  * @param {Object} httpForward - Forward configuration
@@ -250,35 +257,67 @@ async function sendForwardedResponse(request, res, httpForward) {
     await delay(delayMs);
   }
 
+  if (process.env.NODE_ENV !== 'production' || process.env.DEBUG || process.env.DEBUG_CURL) {
+    if (request.body && request.rawBody) {
+      let bodyStr, rawBodyStr;
+      
+      if (typeof request.body === 'object') {
+        try {
+          bodyStr = JSON.stringify(request.body);
+        } catch (e) {
+          bodyStr = `<Cannot stringify: ${e.message}>`;
+        }
+      } else {
+        bodyStr = String(request.body);
+      }
+      
+      if (Buffer.isBuffer(request.rawBody)) {
+        try {
+          rawBodyStr = request.rawBody.toString('utf8');
+        } catch (e) {
+          rawBodyStr = `<Cannot decode: ${e.message}>`;
+        }
+      } else {
+        rawBodyStr = String(request.rawBody);
+      }
+    }
+  }
+
   try {
     const forwardedResponse = await forwardRequest(request, httpForward);
 
     if (forwardedResponse.headers) {
       Object.entries(forwardedResponse.headers).forEach(([key, value]) => {
-        res.set(key, value);
+        if (!['connection', 'transfer-encoding'].includes(key.toLowerCase())) {
+          res.set(key, value);
+        }
       });
     }
 
     res.status(forwardedResponse.status);
-
     
     const responseToRecord = {
       statusCode: forwardedResponse.status,
       headers: forwardedResponse.headers || {},
-      body: forwardedResponse.body
+      body: '<binary data>' // Nie logujemy całej zawartości binarnej
     };
 
     if (forwardedResponse.body) {
-      res.send(forwardedResponse.body);
+      if (Buffer.isBuffer(forwardedResponse.body)) {
+        res.send(forwardedResponse.body);
+      } else if (forwardedResponse.body instanceof ArrayBuffer) {
+        res.send(Buffer.from(forwardedResponse.body));
+      } else {
+        res.send(forwardedResponse.body);
+      }
     } else {
       res.end();
     }
-
     
     recordRequestResponse(request, responseToRecord);
-    
     logResponse(res, request);
   } catch (error) {
+
     const errorResponse = {
       error: 'Bad Gateway',
       message: `Failed to forward request: ${error.message}`
@@ -286,12 +325,56 @@ async function sendForwardedResponse(request, res, httpForward) {
     
     res.status(502).json(errorResponse);
     
-    
     recordRequestResponse(request, {
       statusCode: 502,
       body: errorResponse
     });
     
     logResponse(res, request);
+  }
+}
+
+/**
+ * Processes an incoming request
+ * @param {import('express').Request} req - Express request
+ * @param {import('express').Response} res - Express response
+ * @returns {Promise<void>}
+ */
+export async function processRequest(req, res) {
+  try {
+    const request = {
+      method: req.method,
+      path: req.path,
+      originalUrl: req.originalUrl,
+      headers: req.headers,
+      query: req.query,
+      body: req.body,
+      rawBody: req.rawBody
+    };
+
+    const expectation = findExpectationForRequest(request);
+
+    if (expectation) {
+      if (expectation.httpResponse) {
+        await sendMockResponse(request, res, expectation.httpResponse);
+      } else if (expectation.httpForward) {
+        await sendForwardedResponse(request, res, expectation.httpForward);
+      } else {
+        res.status(501).send({
+          error: 'Not Implemented',
+          message: 'Expectation does not have response or forward defined'
+        });
+      }
+    } else {
+      res.status(404).send({
+        error: 'Not Found',
+        message: 'No expectation matched for the request'
+      });
+    }
+  } catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+      message: 'Error occurred while processing the request'
+    });
   }
 } 
